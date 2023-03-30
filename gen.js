@@ -16,7 +16,7 @@ function simplifyGraph(regex) {
 
   const graph_json = lexical.compile(regex);
   const N = graph_json.length;
-  console.log("og: ", graph_json);
+  //   console.log("og: ", graph_json);
   states = [];
   alphabets = new Set();
   start_state = "0";
@@ -209,7 +209,6 @@ let regex = "M(1|2|3|4|5)*(a|v|d|u)*t";
 // console.log("midd ", graph);
 let text = "asdM12tasdfjjllMtM12234aaatadsfl;jasd;flkMadt";
 console.log("show all matches");
-findSubstrings(regex, text);
 console.log(findSubstrings(regex, text));
 // console.log("trytry: ", yoo);
 // generateTableSub(regex, [
