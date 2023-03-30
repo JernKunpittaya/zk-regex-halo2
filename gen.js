@@ -38,9 +38,6 @@ function simplifyGraph(regex) {
         const key = keys[j];
         let arr_key = key.substring(1, key.length - 1).split(",");
         for (let k = 0; k < arr_key.length; k++) {
-          //   if (!(i in transitions)) {
-          //     transitions[i] = {};
-          //   }
           let alp = arr_key[k].substring(1, arr_key[k].length - 1);
           if (!(alp in alphabets)) {
             alphabets.add(alp);
@@ -68,7 +65,6 @@ function accepts(simp_graph, str) {
   let state = simp_graph["start_state"];
   for (let i = 0; i < str.length; i++) {
     const symbol = str[i];
-
     // console.log("state ", state);
     // console.log("sym ", symbol);
     // console.log("lala ", simp_graph["transitions"][3]["a"]);
@@ -84,6 +80,7 @@ function accepts(simp_graph, str) {
 // Define a function to find all substrings of a long text that are accepted by the finite automata
 function findSubstrings(regex, text) {
   const substrings = [];
+  const indexes = [];
   const simple_graph = simplifyGraph(regex);
   console.log("simp ", simple_graph);
   for (let i = 0; i < text.length; i++) {
@@ -91,131 +88,62 @@ function findSubstrings(regex, text) {
       const substring = text.slice(i, j);
       if (accepts(simple_graph, substring)) {
         substrings.push(substring);
+        indexes.push([i, j]);
       }
     }
   }
-  return substrings;
+  // indexes is not inclusive at the end
+  return [substrings, indexes];
 }
-
-async function generateTableAll(regex, circuitLibPath, circuitName) {
-  const ast = regexpTree.parse(`/${regex}/`);
-  regexpTree.traverse(ast, {
-    "*": function ({ node }) {
-      if (node.type === "CharacterClass") {
-        throw new Error("CharacterClass not supported");
-      }
-    },
-  });
-
-  const graph_json = lexical.compile(regex);
-  const N = graph_json.length;
-  console.log("gen: ", graph_json);
-  //   return graph_json;
-  //   console.log("len: ", N);
-
-  // start output to table all chars
-  const writeStream = fs.createWriteStream("table_all.txt");
-  // write start state (always 0)
-  writeStream.write(0 + "\n");
-  accept_states = [];
-  all_transitions = [];
-
-  // loop through all the graph
-  for (let i = 0; i < N; i++) {
-    if (graph_json[i]["type"] == "accept") {
-      accept_states.push(i);
-    }
-    if (graph_json[i]["edges"] != {}) {
-      const keys = Object.keys(graph_json[i]["edges"]);
-      for (let j = 0; j < keys.length; j++) {
-        const key = keys[j];
-        // console.log("key ", key);
-        let arr_key = key.substring(1, key.length - 1).split(",");
-        for (let k = 0; k < arr_key.length; k++) {
-          //   console.log("arr ", arr_key[k].substring(1, arr_key[k].length - 1));
-          all_transitions.push(
-            i +
-              " " +
-              graph_json[i]["edges"][key] +
-              " " +
-              arr_key[k].substring(1, arr_key[k].length - 1)
-          );
+// match from DFA to text
+function matchSubfromDFA(states, indexes, simp_graph, text) {
+  //states is {1:{"2"},3:{"3","4"},4:{"6"}}
+  // indexes is like [ [ 3, 7 ], [ 15, 17 ], [ 17, 27 ], [ 41, 45 ] ]
+  let reveal_all = [];
+  let reveal_index;
+  for (let i = 0; i < indexes.length; i++) {
+    let state = simp_graph["start_state"];
+    reveal_index = [];
+    for (let j = indexes[i][0]; j < indexes[i][1]; j++) {
+      const symbol = text[j];
+      if (simp_graph["transitions"][state][symbol]) {
+        next_state = simp_graph["transitions"][state][symbol];
+        if (states[state] && states[state].has(next_state)) {
+          reveal_index.push(j);
         }
+        state = next_state;
+      } else {
+        break;
       }
     }
+    console.log("rev ", reveal_index);
+    reveal_all.push(reveal_index);
   }
-  //   console.log("acc: ", accept_states);
-  // write accepted states
-  accept_states.forEach((state) => {
-    writeStream.write(state + " ");
-  });
-  // write max state value (number of nodes in DFA)
-  writeStream.write("\n" + N + "\n");
-  // write all transitions
-  all_transitions.forEach((state) => {
-    writeStream.write(state + "\n");
-  });
-  writeStream.end();
+  // return the reveal position of substring extraction.
+  return reveal_all;
 }
-// every substring
-async function generateTableSub(
-  regex,
-  substrings,
-  circuitLibPath,
-  circuitName
-) {
-  const ast = regexpTree.parse(`/${regex}/`);
-  regexpTree.traverse(ast, {
-    "*": function ({ node }) {
-      if (node.type === "CharacterClass") {
-        throw new Error("CharacterClass not supported");
-      }
-    },
-  });
-
-  const graph_json = lexical.compile(regex);
-  const N = graph_json.length;
-  // substrings = [{min: _, max: _, trans: [[from1, to1], [from2, to2], ...] }, {min: _, max: _, trans: [[from1, to1], [from2, to2], ...]}, ...]
-  let writeStream;
-  // go through each substring
-  let min = 0;
-  // last state of previous variable parts
-  let last_state = 0;
-  let max = 0;
-  for (let i = 0; i < substrings.length; i++) {
-    writeStream = fs.createWriteStream("table_sub_" + i + ".txt");
-    min += substrings[i]["trans"][0][0] - last_state;
-    max += substrings[i]["trans"][0][0] - last_state + substrings[i]["max"] - 1;
-    writeStream.write(substrings[i]["max"] + "\n");
-    writeStream.write(min + "\n");
-    writeStream.write(max + "\n");
-    // console.log("afdsa ", substrings[i]["trans"]);
-    substrings[i]["trans"].forEach((tran) => {
-      writeStream.write(tran[0] + " " + tran[1] + "\n");
-      if (tran[1] < last_state) {
-        last_state = tran[1];
-      }
-    });
-    writeStream.end();
-    // update min
-    min += substrings[i]["min"] - 1;
-  }
+// match from text to DFA. Flow can be one substring --> state --> to all substrings
+// rn support only continuous substring.
+function matchSubstring(sub_index, indexes) {
+  // sub_index = (i, j) non inclusive
+  // indexes = sth like [ [ 3, 7 ], [ 15, 17 ], [ 17, 27 ], [ 41, 45 ] ]
 }
-
-// Example usage
 
 let regex = "M(1|2|3|4|5)*(a|v|d|u)*t";
-// const graph = generateTableAll(regex);
-// console.log("midd ", graph);
 let text = "asdM12tasdfjjllMtM12234aaatadsfl;jasd;flkMadt";
-console.log("show all matches");
-console.log(findSubstrings(regex, text));
-// console.log("trytry: ", yoo);
-// generateTableSub(regex, [
-//   {
-//     min: 1,
-//     max: 5,
-//     trans: [[1, 1]],
-//   },
-//   { min: 2, max: 4, trans: [[2, 2]] },
-// ]);
+const [sub, ind] = findSubstrings(regex, text);
+console.log("substring: ", sub);
+console.log("index ", ind);
+
+// select DFA states from frontend.
+states = {};
+const myset = new Set();
+myset.add("2");
+states["1"] = myset;
+states["2"] = myset;
+console.log("settt: ", states);
+
+console.log(
+  "final: ",
+  matchSubfromDFA(states, ind, simplifyGraph(regex), text)
+);
