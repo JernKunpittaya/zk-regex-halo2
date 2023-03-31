@@ -631,65 +631,78 @@ function regexToMinDFASpec(str) {
   function addPipeInsideBrackets(str) {
     let result = "";
     let insideBrackets = false;
-    for (let i = 0; i < str.length; i++) {
-      if (str[i] === "[") {
-        result += str[i];
+    let index = 0;
+    let currChar;
+    while (true) {
+      currChar = str[index];
+      if (index >= str.length) {
+        break;
+      }
+      if (currChar === "[") {
+        result += "(";
         insideBrackets = true;
+        index++;
         continue;
-      } else if (str[i] === "]") {
+      } else if (currChar === "]") {
+        currChar = insideBrackets ? ")" : currChar;
         insideBrackets = false;
       }
-      result += insideBrackets ? "|" + str[i] : str[i];
+      if (currChar === "\\") {
+        index++;
+        currChar = str[index];
+      }
+      result += insideBrackets ? "|" + currChar : currChar;
+      index++;
     }
-    return result
-      .replaceAll("[|", "[")
-      .replaceAll("[", "(")
-      .replaceAll("]", ")");
+    return result.replaceAll("(|", "(");
   }
 
-  function checkIfBracketsHavePipes(str) {
-    let result = true;
-    let insideBrackets = false;
-    let indexAt = 0;
-    for (let i = 0; i < str.length; i++) {
-      if (indexAt >= str.length) break;
-      if (str[indexAt] === "[") {
-        insideBrackets = true;
-        indexAt++;
-        continue;
-      } else if (str[indexAt] === "]") {
-        insideBrackets = false;
-      }
-      if (insideBrackets) {
-        if (str[indexAt] === "|") {
-          indexAt++;
-        } else {
-          result = false;
-          return result;
-        }
-      }
-      if (str[indexAt] === "\\") {
-        indexAt++;
-      }
-      indexAt++;
-    }
-    return result;
-  }
+  // function checkIfBracketsHavePipes(str) {
+  //   let result = true;
+  //   let insideBrackets = false;
+  //   let indexAt = 0;
+  //   console.log("sss: ", str);
+  //   while (true) {
+  //     console.log("re: ", str[indexAt]);
+  //     if (indexAt >= str.length) break;
+  //     if (str[indexAt] === "[") {
+  //       insideBrackets = true;
+  //       indexAt++;
+  //       continue;
+  //     } else if (str[indexAt] === "]") {
+  //       insideBrackets = false;
+  //     }
+  //     if (insideBrackets) {
+  //       if (str[indexAt] === "|") {
+  //         indexAt++;
+  //       } else {
+  //         result = false;
+  //         return result;
+  //       }
+  //     }
+  //     if (str[indexAt] === "\\") {
+  //       indexAt++;
+  //       console.log("detected: ", indexAt);
+  //     }
+  //     indexAt++;
+  //   }
+  //   return result;
+  // }
 
-  let combined;
-  if (!checkIfBracketsHavePipes(combined_nosep)) {
-    // Aayush comment for check
-    // console.log("Adding pipes within brackets between everything!");
-    combined = addPipeInsideBrackets(combined_nosep);
-    // console.log(
-    //   checkIfBracketsHavePipes(combined),
-    //   " if false, did not add brackets correctly!"
-    // );
-  } else {
-    combined = combined_nosep;
-  }
+  // let combined;
+  // if (!checkIfBracketsHavePipes(combined_nosep)) {
+  //   // Aayush comment for check
+  //   // console.log("Adding pipes within brackets between everything!");
+  //   combined = addPipeInsideBrackets(combined_nosep);
+  //   // console.log(
+  //   //   checkIfBracketsHavePipes(combined),
+  //   //   " if false, did not add brackets correctly!"
+  //   // );
+  // } else {
+  //   combined = combined_nosep;
+  // }
 
-  return combined;
+  return addPipeInsideBrackets(combined_nosep);
 }
 
 // input: regex, output: its minimal DFA

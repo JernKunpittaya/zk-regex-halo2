@@ -6,14 +6,15 @@ const lexical = require("./lexical");
 
 function simplifyGraph(regex) {
   const regex_spec = lexical.regexToMinDFASpec(regex);
-  const ast = regexpTree.parse(`/${regex_spec}/`);
-  regexpTree.traverse(ast, {
-    "*": function ({ node }) {
-      if (node.type === "CharacterClass") {
-        throw new Error("CharacterClass not supported");
-      }
-    },
-  });
+  console.log("simplified: ", regex_spec);
+  // const ast = regexpTree.parse(`/${regex_spec}/`);
+  // regexpTree.traverse(ast, {
+  //   "*": function ({ node }) {
+  //     if (node.type === "CharacterClass") {
+  //       throw new Error("CharacterClass not supported");
+  //     }
+  //   },
+  // });
 
   const graph_json = lexical.compile(regex_spec);
   const N = graph_json.length;
@@ -124,6 +125,7 @@ function matchDFAfromSub(simp_graph, indexes, sub_index) {
   // sub_index = [i, j] non inclusive
   // indexes = sth like [ [ 3, 10 ], [ 18, 20 ], [ 20, 30 ], [ 44, 48 ] ]
 
+  console.log("ccc: ", indexes);
   // find which indexes our sub_index belongs to
   let index;
   for (let i = 0; i < indexes.length; i++) {
@@ -132,6 +134,7 @@ function matchDFAfromSub(simp_graph, indexes, sub_index) {
       break;
     }
   }
+  console.log("check: ", index);
   //   const index =
   //states is {1:{"2"},3:{"3","4"},4:{"6"}}
   let states = {};
@@ -153,27 +156,28 @@ function matchDFAfromSub(simp_graph, indexes, sub_index) {
   return states;
 }
 
-let regex = "M[12345]*[avdu]*t";
-let text = "asdM12adatasdfjjllMtM12234aaatadsfl;jasd;flkMadt";
-const [substrings, indexes] = findSubstrings(simplifyGraph(regex), text);
-console.log("regex: ", regex);
-console.log("text: ", text);
-console.log("match_substring: ", substrings);
-console.log("match_index: ", indexes);
+let regex = "[c\\]uk]*t";
+console.log("OG regex: ", regex);
+let text = "asdM[1adatasdfjjllM[[tM[155aaatad]sfl;jasd;flkM[15adt";
+console.log("simp graph: ", simplifyGraph(regex));
+// const [substrings, indexes] = findSubstrings(simplifyGraph(regex), text);
+// console.log("text: ", text);
+// console.log("match_substring: ", substrings);
+// console.log("match_index: ", indexes);
 
 // select DFA states from frontend.
-let states_test = {};
-const myset = new Set();
-myset.add("2");
-states_test["1"] = myset;
-states_test["2"] = myset;
+// let states_test = {};
+// const myset = new Set();
+// myset.add("2");
+// states_test["1"] = myset;
+// states_test["2"] = myset;
 
-console.log(
-  "matchSubfromDFA: ",
-  matchSubfromDFA(simplifyGraph(regex), text, indexes, states_test)
-);
+// console.log(
+//   "matchSubfromDFA: ",
+//   matchSubfromDFA(simplifyGraph(regex), text, indexes, states_test)
+// );
 
-console.log(
-  "matchDFAfromSub: ",
-  matchDFAfromSub(simplifyGraph(regex), indexes, [24, 30])
-);
+// console.log(
+//   "matchDFAfromSub: ",
+//   matchDFAfromSub(simplifyGraph(regex), indexes, [24, 30])
+// );
