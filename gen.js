@@ -4,19 +4,155 @@ const regexpTree = require("regexp-tree");
 const assert = require("assert");
 const lexical = require("./lexical");
 
-function simplifyGraph(regex) {
-  const regex_spec = lexical.regexToMinDFASpec(regex);
-  console.log("simplified: ", regex_spec);
-  // const ast = regexpTree.parse(`/${regex_spec}/`);
-  // regexpTree.traverse(ast, {
-  //   "*": function ({ node }) {
-  //     if (node.type === "CharacterClass") {
-  //       throw new Error("CharacterClass not supported");
-  //     }
-  //   },
-  // });
+const a2z = "a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z";
+const A2Z = "A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z";
+const r0to9 = "0|1|2|3|4|5|6|7|8|9";
+const alphanum = `${a2z}|${A2Z}|${r0to9}`;
 
-  const graph_json = lexical.compile(regex_spec);
+const key_chars = `(${a2z})`;
+const catch_all =
+  "(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|\"|#|$|%|&|'|\\(|\\)|\\*|\\+|,|-|.|/|:|;|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0b|\x0c)";
+const catch_all_without_semicolon =
+  "(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|\"|#|$|%|&|'|\\(|\\)|\\*|\\+|,|-|.|/|:|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0b|\x0c)";
+
+const email_chars = `${alphanum}|_|.|-`;
+const base_64 = `(${alphanum}|\\+|/|=)`;
+const word_char = `(${alphanum}|_)`;
+const a2z_nosep = "abcdefghijklmnopqrstuvwxyz";
+const A2Z_nosep = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const r0to9_nosep = "0123456789";
+
+// let to_from_regex_old = '(\r\n|\x80)(to|from):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>?\r\n';
+// let regex = `\r\ndkim-signature:(${key_chars}=${catch_all_without_semicolon}+; )+bh=${base_64}+; `;
+// let sig_regex = `${catch_all_without_semicolon}\r\ndkim-signature:(${key_chars}=${catch_all_without_semicolon}+; )+bh=${base_64}+; `;
+// let order_invariant_regex_raw = `((\\n|\x80|^)(((from):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>)?|(subject:[a-zA-Z 0-9]+)?|((to):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>)?|(dkim-signature:((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)=(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|"|#|$|%|&|\'|\\(|\\)|\\*|\\+|,|-|.|/|:|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0B|\f)+; ))?)(\\r))+` // Uses a-z syntax instead of | for each char
+
+// let old_regex = '(\r\n|\x80)(to|from):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>?\r\n';
+// let regex = '(\r\n|\x80)(to|from):((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9| |_|.|"|@|-)+<)?(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_|.|-)+@(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_|.|-)+>?\r\n';
+// let regex = `\r\ndkim-signature:(${key_chars}=${catch_all_without_semicolon}+; )+bh=${base_64}+; `;
+// 'dkim-signature:((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)=(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|"|#|$|%|&|\'|\\(|\\)|\\*|\\+|,|-|.|/|:|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0B|\f)+; )+bh=(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|\\+|/|=)+; '
+// let regex = STRING_PRESELECTOR + `${word_char}+`;
+// let regex = 'hello(0|1|2|3|4|5|6|7|8|9)+world';
+// console.log(regex);
+// console.log(Buffer.from(regex).toString('base64'));
+
+// Note that this is not complete and very case specific i.e. can only handle a-z and not a-c.
+function regexToMinDFASpec(str) {
+  // Replace all A-Z with A2Z etc
+  let combined_nosep = str
+    .replaceAll("A-Z", A2Z_nosep)
+    .replaceAll("a-z", a2z_nosep)
+    .replaceAll("0-9", r0to9_nosep)
+    .replaceAll("\\w", A2Z_nosep + r0to9_nosep + a2z_nosep);
+
+  function addPipeInsideBrackets(str) {
+    let result = "";
+    let insideBrackets = false;
+    let index = 0;
+    let currChar;
+    while (true) {
+      currChar = str[index];
+      if (index >= str.length) {
+        break;
+      }
+      if (currChar === "[") {
+        result += "(";
+        insideBrackets = true;
+        index++;
+        continue;
+      } else if (currChar === "]") {
+        currChar = insideBrackets ? ")" : currChar;
+        insideBrackets = false;
+      }
+      if (currChar === "\\") {
+        index++;
+        currChar = str[index];
+      }
+      result += insideBrackets ? "|" + currChar : currChar;
+      index++;
+    }
+    return result.replaceAll("(|", "(");
+  }
+
+  return addPipeInsideBrackets(combined_nosep);
+}
+
+function toNature(col) {
+  var i,
+    j,
+    base = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    result = 0;
+  if ("1" <= col[0] && col[0] <= "9") {
+    result = parseInt(col, 10);
+  } else {
+    for (i = 0, j = col.length - 1; i < col.length; i += 1, j -= 1) {
+      result += Math.pow(base.length, j) * (base.indexOf(col[i]) + 1);
+    }
+  }
+  return result;
+}
+
+// input: regex, output: its minimal DFA
+function compile(regex) {
+  let nfa = lexical.regexToNfa(regex);
+  let dfa = lexical.minDfa(lexical.nfaToDfa(nfa));
+
+  var i,
+    j,
+    states = {},
+    nodes = [],
+    stack = [dfa],
+    symbols = [],
+    top;
+
+  while (stack.length > 0) {
+    top = stack.pop();
+    if (!states.hasOwnProperty(top.id)) {
+      states[top.id] = top;
+      top.nature = toNature(top.id);
+      nodes.push(top);
+      for (i = 0; i < top.edges.length; i += 1) {
+        if (top.edges[i][0] !== "ϵ" && symbols.indexOf(top.edges[i][0]) < 0) {
+          symbols.push(top.edges[i][0]);
+        }
+        stack.push(top.edges[i][1]);
+      }
+    }
+  }
+  nodes.sort(function (a, b) {
+    return a.nature - b.nature;
+  });
+  symbols.sort();
+
+  let graph = [];
+  for (let i = 0; i < nodes.length; i += 1) {
+    let curr = {};
+    curr.type = nodes[i].type;
+    curr.edges = {};
+    for (let j = 0; j < symbols.length; j += 1) {
+      if (nodes[i].trans.hasOwnProperty(symbols[j])) {
+        curr.edges[symbols[j]] = nodes[i].trans[symbols[j]].nature - 1;
+      }
+    }
+    graph[nodes[i].nature - 1] = curr;
+  }
+  //   console.log("lexical out: ", JSON.stringify(graph));
+  return graph;
+}
+
+function simplifyGraph(regex) {
+  const regex_spec = regexToMinDFASpec(regex);
+  console.log("simple regex: ", regex_spec);
+  const ast = regexpTree.parse(`/${regex_spec}/`);
+  regexpTree.traverse(ast, {
+    "*": function ({ node }) {
+      if (node.type === "CharacterClass") {
+        throw new Error("CharacterClass not supported");
+      }
+    },
+  });
+
+  const graph_json = compile(regex_spec);
   const N = graph_json.length;
   states = [];
   alphabets = new Set();
@@ -124,8 +260,6 @@ function matchSubfromDFA(simp_graph, text, indexes, states) {
 function matchDFAfromSub(simp_graph, indexes, sub_index) {
   // sub_index = [i, j] non inclusive
   // indexes = sth like [ [ 3, 10 ], [ 18, 20 ], [ 20, 30 ], [ 44, 48 ] ]
-
-  console.log("ccc: ", indexes);
   // find which indexes our sub_index belongs to
   let index;
   for (let i = 0; i < indexes.length; i++) {
@@ -134,7 +268,6 @@ function matchDFAfromSub(simp_graph, indexes, sub_index) {
       break;
     }
   }
-  console.log("check: ", index);
   //   const index =
   //states is {1:{"2"},3:{"3","4"},4:{"6"}}
   let states = {};
@@ -156,28 +289,28 @@ function matchDFAfromSub(simp_graph, indexes, sub_index) {
   return states;
 }
 
-let regex = "[c\\]uk]*t";
+// TEST
+
+const regex = "M(1|2|3|4|5)*(a|v|d|u)*t";
+const text = "accttsdM1aatasdfu]kktjjllM1233vdt[tM155aaatad]sfl;jasd;flkM15adt";
+
 console.log("OG regex: ", regex);
-let text = "asdM[1adatasdfjjllM[[tM[155aaatad]sfl;jasd;flkM[15adt";
-console.log("simp graph: ", simplifyGraph(regex));
-// const [substrings, indexes] = findSubstrings(simplifyGraph(regex), text);
-// console.log("text: ", text);
-// console.log("match_substring: ", substrings);
-// console.log("match_index: ", indexes);
+const simp_graph = simplifyGraph(regex);
+console.log("simp graph: ", simp_graph);
+const [substrings, indexes] = findSubstrings(simp_graph, text);
+console.log("text: ", text);
+console.log("match_substring: ", substrings);
+console.log("match_index: ", indexes);
+console.log("\n  ");
 
-// select DFA states from frontend.
-// let states_test = {};
-// const myset = new Set();
-// myset.add("2");
-// states_test["1"] = myset;
-// states_test["2"] = myset;
+// Highlight substring in any regex we matched
+const substring = [37, 41];
 
-// console.log(
-//   "matchSubfromDFA: ",
-//   matchSubfromDFA(simplifyGraph(regex), text, indexes, states_test)
-// );
+// Given DFA
+const states_fromSubstring = matchDFAfromSub(simp_graph, indexes, substring);
+console.log("DFA state from substring: ", states_fromSubstring);
 
-// console.log(
-//   "matchDFAfromSub: ",
-//   matchDFAfromSub(simplifyGraph(regex), indexes, [24, 30])
-// );
+console.log(
+  "index of ALL substrings from DFA states: ",
+  matchSubfromDFA(simp_graph, text, indexes, states_fromSubstring)
+);
