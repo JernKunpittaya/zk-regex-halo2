@@ -6,15 +6,29 @@
  * All of the relevant regexes are in the main repo README.
  */
 
-const key_chars = "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)";
+const a2z = "a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z";
+const A2Z = "A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z";
+const r0to9 = "0|1|2|3|4|5|6|7|8|9";
+const alphanum = `${a2z}|${A2Z}|${r0to9}`;
+
+const key_chars = `(${a2z})`;
 const catch_all =
   "(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|\"|#|$|%|&|'|\\(|\\)|\\*|\\+|,|-|.|/|:|;|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0b|\x0c)";
 const catch_all_without_semicolon =
   "(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|\"|#|$|%|&|'|\\(|\\)|\\*|\\+|,|-|.|/|:|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0b|\x0c)";
-const base_64 =
-  "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|\\+|/|=)";
-const word_char =
-  "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_)";
+
+const email_chars = `${alphanum}|_|.|-`;
+const base_64 = `(${alphanum}|\\+|/|=)`;
+const word_char = `(${alphanum}|_)`;
+
+// let to_from_regex_old = '(\r\n|\x80)(to|from):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>?\r\n';
+// let regex = `\r\ndkim-signature:(${key_chars}=${catch_all_without_semicolon}+; )+bh=${base_64}+; `;
+// let sig_regex = `${catch_all_without_semicolon}\r\ndkim-signature:(${key_chars}=${catch_all_without_semicolon}+; )+bh=${base_64}+; `;
+// let order_invariant_regex_raw = `((\\n|\x80|^)(((from):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>)?|(subject:[a-zA-Z 0-9]+)?|((to):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>)?|(dkim-signature:((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)=(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|"|#|$|%|&|\'|\\(|\\)|\\*|\\+|,|-|.|/|:|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0B|\f)+; ))?)(\\r))+` // Uses a-z syntax instead of | for each char
+
+const a2z_nosep = "abcdefghijklmnopqrstuvwxyz";
+const A2Z_nosep = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const r0to9_nosep = "0123456789";
 
 // let old_regex = '(\r\n|\x80)(to|from):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>?\r\n';
 // let regex = '(\r\n|\x80)(to|from):((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9| |_|.|"|@|-)+<)?(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_|.|-)+@(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|0|1|2|3|4|5|6|7|8|9|_|.|-)+>?\r\n';
@@ -605,6 +619,79 @@ function toNature(col) {
   return result;
 }
 
+// Note that this is not complete and very case specific i.e. can only handle a-z and not a-c.
+function regexToMinDFASpec(str) {
+  // Replace all A-Z with A2Z etc
+  let combined_nosep = str
+    .replaceAll("A-Z", A2Z_nosep)
+    .replaceAll("a-z", a2z_nosep)
+    .replaceAll("0-9", r0to9_nosep)
+    .replaceAll("\\w", A2Z_nosep + r0to9_nosep + a2z_nosep);
+
+  function addPipeInsideBrackets(str) {
+    let result = "";
+    let insideBrackets = false;
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === "[") {
+        result += str[i];
+        insideBrackets = true;
+        continue;
+      } else if (str[i] === "]") {
+        insideBrackets = false;
+      }
+      result += insideBrackets ? "|" + str[i] : str[i];
+    }
+    return result
+      .replaceAll("[|", "[")
+      .replaceAll("[", "(")
+      .replaceAll("]", ")");
+  }
+
+  function checkIfBracketsHavePipes(str) {
+    let result = true;
+    let insideBrackets = false;
+    let indexAt = 0;
+    for (let i = 0; i < str.length; i++) {
+      if (indexAt >= str.length) break;
+      if (str[indexAt] === "[") {
+        insideBrackets = true;
+        indexAt++;
+        continue;
+      } else if (str[indexAt] === "]") {
+        insideBrackets = false;
+      }
+      if (insideBrackets) {
+        if (str[indexAt] === "|") {
+          indexAt++;
+        } else {
+          result = false;
+          return result;
+        }
+      }
+      if (str[indexAt] === "\\") {
+        indexAt++;
+      }
+      indexAt++;
+    }
+    return result;
+  }
+
+  let combined;
+  if (!checkIfBracketsHavePipes(combined_nosep)) {
+    // Aayush comment for check
+    // console.log("Adding pipes within brackets between everything!");
+    combined = addPipeInsideBrackets(combined_nosep);
+    // console.log(
+    //   checkIfBracketsHavePipes(combined),
+    //   " if false, did not add brackets correctly!"
+    // );
+  } else {
+    combined = combined_nosep;
+  }
+
+  return combined;
+}
+
 // input: regex, output: its minimal DFA
 function compile(regex) {
   let nfa = regexToNfa(regex);
@@ -654,9 +741,14 @@ function compile(regex) {
 }
 module.exports = {
   compile,
+  regexToMinDFASpec,
   key_chars,
   base_64,
   word_char,
   catch_all,
   catch_all_without_semicolon,
 };
+// let test_regex = "[abc]";
+// console.log("test test: ", regexToMinDFASpec(test_regex));
+// console.log("control: ", compile("(a|b|c)"));
+// console.log("mochi: ", compile(regexToMinDFASpec(test_regex)));

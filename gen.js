@@ -5,7 +5,8 @@ const assert = require("assert");
 const lexical = require("./lexical");
 
 function simplifyGraph(regex) {
-  const ast = regexpTree.parse(`/${regex}/`);
+  const regex_spec = lexical.regexToMinDFASpec(regex);
+  const ast = regexpTree.parse(`/${regex_spec}/`);
   regexpTree.traverse(ast, {
     "*": function ({ node }) {
       if (node.type === "CharacterClass") {
@@ -14,7 +15,7 @@ function simplifyGraph(regex) {
     },
   });
 
-  const graph_json = lexical.compile(regex);
+  const graph_json = lexical.compile(regex_spec);
   const N = graph_json.length;
   states = [];
   alphabets = new Set();
@@ -77,15 +78,13 @@ function accepts(simp_graph, str) {
 }
 
 // Define a function to find all substrings of a long text that are accepted by the finite automata
-function findSubstrings(regex, text) {
+function findSubstrings(simp_graph, text) {
   const substrings = [];
   const indexes = [];
-  const simple_graph = simplifyGraph(regex);
-  console.log("simple graph: ", simple_graph);
   for (let i = 0; i < text.length; i++) {
     for (let j = i + 1; j <= text.length; j++) {
       const substring = text.slice(i, j);
-      if (accepts(simple_graph, substring)) {
+      if (accepts(simp_graph, substring)) {
         substrings.push(substring);
         indexes.push([i, j]);
       }
@@ -154,9 +153,9 @@ function matchDFAfromSub(simp_graph, indexes, sub_index) {
   return states;
 }
 
-let regex = "M(1|2|3|4|5)*(a|v|d|u)*t";
+let regex = "M[12345]*[avdu]*t";
 let text = "asdM12adatasdfjjllMtM12234aaatadsfl;jasd;flkMadt";
-const [substrings, indexes] = findSubstrings(regex, text);
+const [substrings, indexes] = findSubstrings(simplifyGraph(regex), text);
 console.log("regex: ", regex);
 console.log("text: ", text);
 console.log("match_substring: ", substrings);
