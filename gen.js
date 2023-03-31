@@ -95,7 +95,7 @@ function findSubstrings(regex, text) {
   return [substrings, indexes];
 }
 // match from DFA to text
-function matchSubfromDFA(states, simp_graph, text, indexes) {
+function matchSubfromDFA(simp_graph, text, indexes, states) {
   //states is {1:{"2"},3:{"3","4"},4:{"6"}}
   // indexes is like [ [ 3, 10 ], [ 18, 20 ], [ 20, 30 ], [ 44, 48 ] ]
   // let myset = new Set();
@@ -157,22 +157,24 @@ function matchDFAfromSub(simp_graph, indexes, sub_index) {
 let regex = "M(1|2|3|4|5)*(a|v|d|u)*t";
 let text = "asdM12adatasdfjjllMtM12234aaatadsfl;jasd;flkMadt";
 const [substrings, indexes] = findSubstrings(regex, text);
-console.log("substring: ", substrings);
-console.log("index ", indexes);
+console.log("regex: ", regex);
+console.log("text: ", text);
+console.log("match_substring: ", substrings);
+console.log("match_index: ", indexes);
 
 // select DFA states from frontend.
-states = {};
+let states_test = {};
 const myset = new Set();
 myset.add("2");
-states["1"] = myset;
-states["2"] = myset;
+states_test["1"] = myset;
+states_test["2"] = myset;
 
 console.log(
-  "matchSub: ",
-  matchSubfromDFA(states, simplifyGraph(regex), text, indexes)
+  "matchSubfromDFA: ",
+  matchSubfromDFA(simplifyGraph(regex), text, indexes, states_test)
 );
 
 console.log(
-  "matchState: ",
+  "matchDFAfromSub: ",
   matchDFAfromSub(simplifyGraph(regex), indexes, [24, 30])
 );
