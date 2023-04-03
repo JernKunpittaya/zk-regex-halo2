@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, FC } from 'react';
 interface HighlightRecord {
   [name: string]: number[];
 }
@@ -12,6 +12,7 @@ export const Highlighter : React.FC<{
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
   const [highlightName, setHighlightName] = useState('');
   const [allHighlights, setAllHighlights] = useState({})
+  const [buttonClick, setButtonClick] = useState(0);
 
   const handleHighlight = (index: number) => {
     if (isHighlighting) {
@@ -32,6 +33,7 @@ export const Highlighter : React.FC<{
 
   const handleBeginHighlight = () => {
     setIsHighlighting(true);
+    setButtonClick(buttonClick+1)
   };
 
   const handleEndHighlight = () => {
@@ -46,6 +48,8 @@ export const Highlighter : React.FC<{
       setAllHighlights((prevState) => ({ ...prevState, [name]: condensed}));
       setHighlightedIndices([]);
     }
+    setButtonClick(buttonClick+1)
+
     
   };
 
@@ -67,10 +71,66 @@ export const Highlighter : React.FC<{
       <button onClick={isHighlighting ? handleEndHighlight : handleBeginHighlight}>
         {isHighlighting ? 'End Highlight' : 'Begin New Highlight'}
       </button>
+      <HighlightedText highlights={allHighlights} sampleText={sampleText}/>
       <pre>{JSON.stringify(allHighlights, null, 2)}</pre>
     </div>
   );
 };
+
+/////////////////////////////
+
+type HighlightObject =  Record<string, [number, number][]>;
+
+interface Props {
+  highlights: HighlightObject
+  sampleText: string
+}
+
+const HighlightedText: React.FC<Props> = ({ highlights, sampleText }) => {
+
+  const standardOpacity = 0.5
+  const colorSegments = Object.entries(highlights).map(([color, indices]) => ({
+    color,
+    segments: indices.map(([start, end]) => ({
+      start,
+      end,
+    })),
+  }));
+
+  const colors: Record<string, string> = {};
+
+  Object.keys(highlights).forEach((id) => {
+    colors[id] = `rgba(${Math.floor(Math.random() * 96+160)}, ${Math.floor(
+      Math.random() * 96+160
+    )}, ${Math.floor(Math.random() * 120
+      +136)}, ${standardOpacity})`;
+  });
+
+  return (
+    <p>
+      {sampleText.split('').map((char, index) => {
+        const segment = colorSegments.find(({ segments }) =>
+          segments.some(({ start, end }) => index >= start && index < end)
+        );
+
+        if (segment) {
+          // Apply the corresponding color to the character
+          const { color, segments } = segment;
+          return (
+            <mark
+            className='highlight'
+            key={index} style={{ backgroundColor: colors[color], opacity: standardOpacity }}>
+              {char}
+            </mark>
+          );
+        } else {
+
+          return char;
+        }
+      })}
+    </p>
+  );
+}
 
 
 // 1. user highlights sections of sample text
