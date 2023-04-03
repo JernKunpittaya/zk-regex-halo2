@@ -1,66 +1,58 @@
-import React, { useState } from 'react';
+// takes in allHighlights from Highlighter.tsx, then feeds it to gen functions
+// this should just be static? updated every time someone presses end highlight
+import React, { useState, FC } from 'react';
 
-interface HighlightRecord {
-  [name: string]: number[];
+const sampleText = "This is a sample text for highlighting.";
+
+type HighlightObject =  Record<string, [number, number][]>;
+
+interface Props {
+  highlights: HighlightObject
+  sampleText: string
 }
-const SampleText = "This is a sample text for highlighting.";
 
-export const Highlighter : React.FC<{}> = ({}) => {
-  const [isHighlighting, setIsHighlighting] = useState(false);
-  const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
-  const [highlightName, setHighlightName] = useState('');
-  const [allHighlights, setAllHighlights] = useState({})
+export const HighlightedText: React.FC<Props> = ({ highlights, sampleText }) => {
 
-  const handleHighlight = (index: number) => {
-    if (isHighlighting) {
-      if (highlightedIndices.includes(index)) {
-        setHighlightedIndices((prevState) => prevState.filter((i) => i !== index));
-      } else {
-        setHighlightedIndices((prevState) => [...prevState, index]);
-      }
-    }
-  };
+  const standardOpacity = 0.5
+  const colorSegments = Object.entries(highlights).map(([color, indices]) => ({
+    color,
+    segments: indices.map(([start, end]) => ({
+      start,
+      end,
+    })),
+  }));
 
-  const handleBeginHighlight = () => {
-    setIsHighlighting(true);
-  };
+  const colors: Record<string, string> = {};
 
-  const handleEndHighlight = () => {
-    setIsHighlighting(false);
-    // prompt user to enter name for highlight region
-    const name = prompt('Enter highlight name:');
-    if (name) {
-      setHighlightName(name);
-      setAllHighlights((prevState) => ({ ...prevState, [name]: highlightedIndices }));
-      setHighlightedIndices([]);
-    }
-  };
-
-  // sample text to highlight
-  const text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+  Object.keys(highlights).forEach((id) => {
+    colors[id] = `rgba(${Math.floor(Math.random() * 96+160)}, ${Math.floor(
+      Math.random() * 96+160
+    )}, ${Math.floor(Math.random() * 120
+      +136)}, ${standardOpacity})`;
+  });
 
   return (
-    <div>
-      <div>
-        {SampleText.split('').map((char, index) => (
-          <span
-            key={index}
-            style={{ backgroundColor: highlightedIndices.includes(index) ? 'yellow' : 'transparent' }}
-            onClick={() => handleHighlight(index)}
-          >
-            {char}
-          </span>
-        ))}
-      </div>
-      <button onClick={isHighlighting ? handleEndHighlight : handleBeginHighlight}>
-        {isHighlighting ? 'End Highlight' : 'Begin New Highlight'}
-      </button>
-      <pre>{JSON.stringify(allHighlights, null, 2)}</pre>
-    </div>
+    <p>
+      {sampleText.split('').map((char, index) => {
+        const segment = colorSegments.find(({ segments }) =>
+          segments.some(({ start, end }) => index >= start && index < end)
+        );
+
+        if (segment) {
+          // Apply the corresponding color to the character
+          const { color, segments } = segment;
+          return (
+            <mark
+            className='highlight'
+            key={index} style={{ backgroundColor: colors[color], opacity: standardOpacity }}>
+              {char}
+            </mark>
+          );
+        } else {
+
+          return char;
+        }
+      })}
+    </p>
   );
-};
-
-
-// 1. user highlights sections of sample text
-// 2. press a button to confirm these are the states they want
-// 3. 
+}
