@@ -1,107 +1,81 @@
-// to refactor
-// IGNORE this table parts
+const fs = require("fs");
+const path = require("path");
+const regexpTree = require("regexp-tree");
+const assert = require("assert");
+const lexical = require("./lexical");
+const gen = require("./gen");
 
-// async function generateTableAll(regex, circuitLibPath, circuitName) {
-//   const ast = regexpTree.parse(`/${regex}/`);
-//   regexpTree.traverse(ast, {
-//     "*": function ({ node }) {
-//       if (node.type === "CharacterClass") {
-//         throw new Error("CharacterClass not supported");
-//       }
-//     },
-//   });
+// Generate table for all chars DFA
+async function generateTableAll(simp_graph) {
+  // start output to table all chars
+  const writeStream = fs.createWriteStream("table_all.txt");
+  // write start state (always 0)
+  writeStream.write(0 + "\n");
+  // write accepted state
+  simp_graph["accepted_states"].forEach((state) => {
+    writeStream.write(state + " ");
+  });
+  // write number of nodes in DFA
+  writeStream.write("\n" + simp_graph["states"].length + "\n");
+  // write current state, next state, char
+  for (const state in simp_graph["transitions"]) {
+    if (simp_graph["transitions"][state] != {}) {
+      for (const alp in simp_graph["transitions"][state]) {
+        writeStream.write(
+          state + " " + simp_graph["transitions"][state][alp] + " " + alp + "\n"
+        );
+      }
+    }
+  }
+  writeStream.end();
+}
+// Generate table for substring, given the state to reveal
+// MUST refer to the table all of its corresponding regex
+async function generateTableSub(states) {
+  // states = a list of states that reveal a certain substring, will spin of many sub_table, depending on how many substrings you choose.
+  // states = [{dictionary of states to reveal for substring1}, {dictionary of states to reveal for substring2}, ...]
+  console.log("latest: ", states[0]);
+  let writeStream;
+  for (let i = 0; i < states.length; i++) {
+    writeStream = fs.createWriteStream("table_sub_" + i + ".txt");
+    // hardcode max substring len, min position of substring, max position of substring
+    writeStream.write(30 + "\n" + 0 + "\n" + 100 + "\n");
+    for (const state in states[i]) {
+      for (const nextState of states[i][state]) {
+        writeStream.write(state + " " + nextState + "\n");
+      }
+    }
+    writeStream.end();
+  }
+}
 
-//   const graph_json = lexical.compile(regex);
-//   const N = graph_json.length;
-//   console.log("gen: ", graph_json);
-//   //   return graph_json;
-//   //   console.log("len: ", N);
+const regex = "M(1|2|3|4|5)*(a|v|d|u)*t";
+const text = "accttsdM1aatasdfu]kktjjllM1233vdt[tM155aaatad]sfl;jasd;flkM15adt";
 
-//   // start output to table all chars
-//   const writeStream = fs.createWriteStream("table_all.txt");
-//   // write start state (always 0)
-//   writeStream.write(0 + "\n");
-//   accept_states = [];
-//   all_transitions = [];
+console.log("OG regex: ", regex);
+const simp_graph = gen.simplifyGraph(regex);
+console.log("simp graph: ", simp_graph);
+generateTableAll(simp_graph);
+const [substrings, indexes] = gen.findSubstrings(simp_graph, text);
+console.log("text: ", text);
+console.log("match_substring: ", substrings);
+console.log("match_index: ", indexes);
+console.log("\n  ");
 
-//   // loop through all the graph
-//   for (let i = 0; i < N; i++) {
-//     if (graph_json[i]["type"] == "accept") {
-//       accept_states.push(i);
-//     }
-//     if (graph_json[i]["edges"] != {}) {
-//       const keys = Object.keys(graph_json[i]["edges"]);
-//       for (let j = 0; j < keys.length; j++) {
-//         const key = keys[j];
-//         // console.log("key ", key);
-//         let arr_key = key.substring(1, key.length - 1).split(",");
-//         for (let k = 0; k < arr_key.length; k++) {
-//           //   console.log("arr ", arr_key[k].substring(1, arr_key[k].length - 1));
-//           all_transitions.push(
-//             i +
-//               " " +
-//               graph_json[i]["edges"][key] +
-//               " " +
-//               arr_key[k].substring(1, arr_key[k].length - 1)
-//           );
-//         }
-//       }
-//     }
-//   }
-//   //   console.log("acc: ", accept_states);
-//   // write accepted states
-//   accept_states.forEach((state) => {
-//     writeStream.write(state + " ");
-//   });
-//   // write max state value (number of nodes in DFA)
-//   writeStream.write("\n" + N + "\n");
-//   // write all transitions
-//   all_transitions.forEach((state) => {
-//     writeStream.write(state + "\n");
-//   });
-//   writeStream.end();
-// }
-// // every substring
-// async function generateTableSub(
-//   regex,
-//   substrings,
-//   circuitLibPath,
-//   circuitName
-// ) {
-//   const ast = regexpTree.parse(`/${regex}/`);
-//   regexpTree.traverse(ast, {
-//     "*": function ({ node }) {
-//       if (node.type === "CharacterClass") {
-//         throw new Error("CharacterClass not supported");
-//       }
-//     },
-//   });
+// Highlight substring in any regex we matched
+const substring = [37, 41];
+console.log("select substring: ", substring);
 
-//   const graph_json = lexical.compile(regex);
-//   const N = graph_json.length;
-//   // substrings = [{min: _, max: _, trans: [[from1, to1], [from2, to2], ...] }, {min: _, max: _, trans: [[from1, to1], [from2, to2], ...]}, ...]
-//   let writeStream;
-//   // go through each substring
-//   let min = 0;
-//   // last state of previous variable parts
-//   let last_state = 0;
-//   let max = 0;
-//   for (let i = 0; i < substrings.length; i++) {
-//     writeStream = fs.createWriteStream("table_sub_" + i + ".txt");
-//     min += substrings[i]["trans"][0][0] - last_state;
-//     max += substrings[i]["trans"][0][0] - last_state + substrings[i]["max"] - 1;
-//     writeStream.write(substrings[i]["max"] + "\n");
-//     writeStream.write(min + "\n");
-//     writeStream.write(max + "\n");
-//     // console.log("afdsa ", substrings[i]["trans"]);
-//     substrings[i]["trans"].forEach((tran) => {
-//       writeStream.write(tran[0] + " " + tran[1] + "\n");
-//       if (tran[1] < last_state) {
-//         last_state = tran[1];
-//       }
-//     });
-//     writeStream.end();
-//     // update min
-//     min += substrings[i]["min"] - 1;
-//   }
-// }
+// Given DFA
+const states_fromSubstring = gen.matchDFAfromSub(
+  simp_graph,
+  indexes,
+  substring
+);
+console.log("DFA state from substring: ", states_fromSubstring);
+generateTableSub([states_fromSubstring]);
+
+console.log(
+  "index of ALL substrings from DFA states: ",
+  gen.matchSubfromDFA(simp_graph, text, indexes, states_fromSubstring)
+);

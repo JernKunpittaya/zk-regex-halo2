@@ -289,6 +289,13 @@ function matchDFAfromSub(simp_graph, indexes, sub_index) {
   return states;
 }
 
+module.exports = {
+  simplifyGraph,
+  findSubstrings,
+  matchDFAfromSub,
+  matchSubfromDFA,
+};
+
 // TEST
 
 const regex = "M(1|2|3|4|5)*(a|v|d|u)*t";
