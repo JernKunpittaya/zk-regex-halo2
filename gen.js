@@ -305,6 +305,7 @@ console.log("\n  ");
 
 // Highlight substring in any regex we matched
 const substring = [37, 41];
+console.log("select substring: ", substring);
 
 // Given DFA
 const states_fromSubstring = matchDFAfromSub(simp_graph, indexes, substring);
