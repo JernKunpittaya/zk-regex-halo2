@@ -298,8 +298,8 @@ module.exports = {
 
 // TEST
 
-const regex = "M(1|2|3|4|5)*(a|v|d|u)*t";
-const text = "accttsdM1aatasdfu]kktjjllM1233vdt[tM155aaatad]sfl;jasd;flkM15adt";
+const regex = " [0-9]+ (usdc|dai|eth) ";
+const text = "i send 54 eth to you but 6 daid back 7 dai ";
 
 console.log("OG regex: ", regex);
 const simp_graph = simplifyGraph(regex);
@@ -311,7 +311,7 @@ console.log("match_index: ", indexes);
 console.log("\n  ");
 
 // Highlight substring in any regex we matched
-const substring = [37, 41];
+const substring = [7, 13];
 console.log("select substring: ", substring);
 
 // Given DFA
