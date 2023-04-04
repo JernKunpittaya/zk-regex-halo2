@@ -10,6 +10,15 @@ import styled, { CSSProperties } from "styled-components";
 import { Highlighter } from "./components/Highlighter";
 import { HighlightedText } from "./components/HighlightedText";
 import { Button } from "./components/Button";
+import { match } from "assert";
+import { generate } from "regexp-tree";
+
+const {
+  simplifyGraph,
+  findSubstrings,
+  matchDFAfromSub,
+  matchSubfromDFA
+} = require('./gen') ;
 
 // takes in a regex to be represented into a DFA
 
@@ -21,30 +30,29 @@ import { Button } from "./components/Button";
 
 type HighlightObject =  Record<string, number[]>;
 type ColorObject = Record<string, string>
+type UserHighlightObject = Record<string, [number[]]>
 
 
 export const MainPage: React.FC<{}> = (props) => {
-  const text = "Some sample text to be highlighted."
-  const [userHighlights, setUserHighlights] = useState<HighlightObject>({});
+  const text = "accttsdM1aatasdfu]kktjjllM1233vdt[tM155aaatad]sfl;jasd;flkM15adt"
+  const testRegex = "M(1|2|3|4|5)*(a|v|d|u)*t"
+
+  function generateSegments(regex: string, idxPair: number[]) {
+    console.log("idxPair, ", idxPair)
+    const graph = simplifyGraph(regex)
+    const [substr, idxs] = findSubstrings(graph, text)
+    const states = matchDFAfromSub(graph, idxs, idxPair, text)
+
+    const final = matchSubfromDFA(graph, text, idxs, states)
+    return [states, final]
+  }
+
+  const [userHighlights, setUserHighlights] = useState<UserHighlightObject>({});
   const [userColors, setUserColors] = useState<ColorObject>({});
   const [newHighlight, setNewHighlight] = useState<HighlightObject>({});
   const [newColor, setNewColor] = useState<ColorObject>({});
   const [DFAStates, setDFAStates] = useState({})
-  const prevUserHighlights = usePrevious(userHighlights);
-
-  function handleUpdateHighlight(newData: HighlightObject) {
-    setUserHighlights((prevState) => {
-      const updatedState = {...prevState, ...newData};
-      return updatedState
-    });
-  };
-
-  function handleUpdateColor(newData: ColorObject) {
-    setUserColors((prevState) => {
-      const updatedState = {...prevState, ...newData};
-      return updatedState
-    });
-  };
+  // const prevUserHighlights = usePrevious(userHighlights);
 
   function usePrevious<highlights>(value: highlights): highlights | undefined {
     const ref = useRef<highlights>()
@@ -56,9 +64,30 @@ export const MainPage: React.FC<{}> = (props) => {
     return ref.current
   };
 
+  // Highlight functions
+
+  function handleUpdateHighlight(newData: HighlightObject) {
+    const key = Object.keys(newData)[0]
+    const raw = newData[key]
+    const processedSegments: Record<string, [number[]]> = {}
+    processedSegments[key] = generateSegments(testRegex, raw)[1]
+
+    setUserHighlights((prevState) => {
+      const updatedState = {...prevState, ...processedSegments};
+      return updatedState
+    });
+  };
+
+  function handleUpdateColor(newData: ColorObject) {
+    setUserColors((prevState) => {
+      const updatedState = {...prevState, ...newData};
+      return updatedState
+    });
+  };
+
+
   useUpdateEffect(() => {
     handleUpdateHighlight(newHighlight)
-    console.log(userHighlights)
   }, [newHighlight]);
 
   useUpdateEffect(()=>  {
@@ -77,12 +106,12 @@ export const MainPage: React.FC<{}> = (props) => {
             setNewHighlight={setNewHighlight}
             newColor={{}}
             setNewColor={setNewColor}/> {/* returns highlightedText */}
-          {/* <Button> press this to pass down */}
 
           <HighlightedText
           userHighlights={userHighlights}
           sampleText={text}
           userColors={userColors}/>
+
           {/* <MinDFA> */}
         </Container>
     );

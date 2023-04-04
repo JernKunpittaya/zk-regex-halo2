@@ -53,9 +53,9 @@ export const Highlighter : React.FC<props> = ({sampleText, newHighlight, setNewH
     const name = prompt('Enter highlight name:');
     if (name) {
       setHighlightName(name);
-      const condensed = highlightedIndices.length === 1 ? [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[0]] : [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[highlightedIndices.length - 1]];
+      const condensed = highlightedIndices.length === 1 ? [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[0]+1] : [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[highlightedIndices.length - 1]];
       const range = (start: number, end:number) => Array.from(Array(end - start + 1).keys()).map(x => x + start);
-      const testing = range(condensed[0], condensed[1])
+      // const testing = range(condensed[0], condensed[1])
       setNewHighlight({[name]: condensed});
       setNewColor({[name]: curColor});
       // setTestingOnly((prevState) => ({...prevState, [name]: testing}));
