@@ -155,15 +155,42 @@ function parseRegex(text) {
 
   let new_text = [];
   let i = 0;
+
   while (i < text.length) {
     if (text[i] == "\\") {
+      // change here to make fancy: \n, \t, \r, \x0b, \x0c
+      // if (text[i + 1] == "n") {
+      //   new_text.push(["\n"]);
+      // } else if (text[i + 1] == "t") {
+      //   new_text.push(["\t"]);
+      // } else if (text[i + 1] == "r") {
+      //   new_text.push(["\r"]);
+      // } else if (
+      //   text[i + 1] == "x" &&
+      //   text[i + 2] == "0" &&
+      //   text[i + 3] == "b"
+      // ) {
+      //   new_text.push(["\x0b"]);
+      //   console.log("haha");
+      //   i += 2;
+      // } else if (
+      //   text[i + 1] == "x" &&
+      //   text[i + 2] == "0" &&
+      //   text[i + 3] == "c"
+      // ) {
+      //   new_text.push(["\x0c"]);
+      //   i += 2;
+      // } else {
       new_text.push([text[i + 1]]);
+      // }
+      // done change
       i += 2;
     } else {
       new_text.push(text[i]);
       i += 1;
     }
   }
+  console.log("new_text: ", new_text);
   return parseSub(new_text, 0, new_text.length, true);
 }
 
@@ -549,10 +576,22 @@ function minDfa(dfa) {
     });
     Object.keys(edges).forEach(function (from) {
       Object.keys(edges[from]).forEach(function (to) {
-        symbol = JSON.stringify(Object.keys(edges[from][to]).sort());
-        nodes[from].symbols.push(symbol);
-        nodes[from].edges.push([symbol, nodes[to]]);
-        nodes[from].trans[symbol] = nodes[to];
+        // change here
+        // symbol = JSON.stringify(Object.keys(edges[from][to]).sort());
+        let tmp_obj = Object.keys(edges[from][to]).sort();
+        let modified_symbol = "['";
+        for (let i = 0; i < tmp_obj.length; i++) {
+          modified_symbol += tmp_obj[i] + "'";
+          if (i < tmp_obj.length - 1) {
+            modified_symbol += ",'";
+          }
+        }
+        modified_symbol += "]";
+        nodes[from].symbols.push(modified_symbol);
+        // nodes[from].edges.push([symbol, nodes[to]]);
+        nodes[from].edges.push([modified_symbol, nodes[to]]);
+        // nodes[from].trans[symbol] = nodes[to];
+        nodes[from].trans[modified_symbol] = nodes[to];
       });
     });
     return nodes[0];
