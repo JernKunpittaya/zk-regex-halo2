@@ -3,6 +3,11 @@ interface HighlightRecord {
   [name: string]: number[];
 }
 
+// Highlight text on a text input and auto-highlight the rest of the text segments
+// corresponding to the same DFA states.
+
+// Exports allHighlights 
+
 const SampleText = "This is a sample text for highlighting.";
 
 export const Highlighter : React.FC<{
@@ -15,6 +20,7 @@ export const Highlighter : React.FC<{
   const [buttonClick, setButtonClick] = useState(0);
   const [colors, setColors] = useState({})
   const [curColor, setCurColor] = useState("rgba(0, 0, 0, 1)")
+  // const [testingOnly, setTestingOnly] = useState({})
 
   const handleHighlight = (index: number) => {
     if (isHighlighting) {
@@ -41,8 +47,11 @@ export const Highlighter : React.FC<{
     if (name) {
       setHighlightName(name);
       const condensed = highlightedIndices.length === 1 ? [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[0]] : [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[highlightedIndices.length - 1]];
+      const range = (start: number, end:number) => Array.from(Array(end - start + 1).keys()).map(x => x + start);
+      const testing = range(condensed[0], condensed[1])
       setAllHighlights((prevState) => ({ ...prevState, [name]: condensed}));
       setColors((prevState) => ({ ...prevState, [name]: curColor}));
+      // setTestingOnly((prevState) => ({...prevState, [name]: testing}));
       setHighlightedIndices([]);
     }
     setButtonClick(buttonClick+1)
@@ -67,14 +76,21 @@ export const Highlighter : React.FC<{
         {isHighlighting ? 'End Highlight' : 'Begin New Highlight'}
       </button>
 
+      {/* Highlighted Text Below: maybe the two files should still be separated? */}
+
       <HighlightedText highlights={allHighlights} sampleText={sampleText} usedColors={colors}/>
+      {/* <HighlightedText highlights={testingOnly} sampleText={sampleText} usedColors={colors}/> */}
       <pre>{JSON.stringify(allHighlights, null, 2)}</pre>
+      {/* <pre>{JSON.stringify(testingOnly, null, 2)}</pre> */}
     </div>
   );
 };
 
 
-type HighlightObject =  Record<string, [number, number][]>;
+
+/// MUST pass in
+
+type HighlightObject =  Record<string, number[]>;
 
 type ColorObject = Record<string, string>
 
@@ -90,17 +106,14 @@ const HighlightedText: React.FC<Props> = ({ highlights, sampleText, usedColors }
   console.log(highlights)
   const colorSegments = Object.entries(highlights).map(([id, indices]) => ({
     id,
-    segments: indices.map(([start, end]) => ({
-      start,
-      end,
-    })),
+    segments: indices,
   }));
 
   return (
     <p>
       {sampleText.split('').map((char, index) => {
         const segment = colorSegments.find(({ segments }) =>
-          segments.some(({ start, end }) => index >= start && index < end+1)
+          segments.includes(index)
         );
 
         if (segment) {
@@ -121,3 +134,8 @@ const HighlightedText: React.FC<Props> = ({ highlights, sampleText, usedColors }
     </p>
   );
 }
+
+
+// 1. user highlights sections of sample text
+// 2. press a button to confirm these are the states they want
+// 3. 

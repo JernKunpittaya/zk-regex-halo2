@@ -4,15 +4,9 @@ import { useAsync, useMount, useUpdateEffect } from "react-use";
 // @ts-ignore
 // @ts-ignore
 
-import _, { add } from "lodash";
-// @ts-ignore
 
 import styled, { CSSProperties } from "styled-components";
-import { Highlighter } from "components/TextHighlight";
-
-var Buffer = require("buffer/").Buffer; // note: the trailing slash is important!
-const generate_input = require("../scripts/generate_input");
-
+import { Highlighter } from "./components/Highlighter";
 
 // takes in a regex to be represented into a DFA
 
@@ -24,10 +18,17 @@ const generate_input = require("../scripts/generate_input");
 
 
 export const MainPage: React.FC<{}> = (props) => {
+  const text = "Some sample text to be highlighted."
 
     return (
         <Container>
-            <Highlighter/>
+          {/* <RegexInput> */}
+          {/* <TextInput> => passes down to highlighter */}
+
+            <Highlighter sampleText={text}/> {/* returns highlightedText */}
+            
+          {/* <HighlightedText> */}
+          {/* <MinDFA> */}
         </Container>
     );
 };
