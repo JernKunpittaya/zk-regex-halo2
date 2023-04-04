@@ -67,6 +67,10 @@ function regexToMinDFASpec(str) {
       if (currChar === "\\") {
         index++;
         currChar = str[index];
+        // in case with escape +
+        if (currChar === "+") {
+          currChar = "\\+";
+        }
       }
       result += insideBrackets ? "|" + currChar : currChar;
       index++;
@@ -141,10 +145,11 @@ function compile(regex) {
 }
 
 function simplifyGraph(regex) {
+  // console.log("input: ", regex);
+  // const regex2 = "d[b\\+]c";
+  // console.log("real inp: ", regex2);
   const regex_spec = regexToMinDFASpec(regex);
-  // console.log("before: ", regex);
-  // console.log("after: ", regex_spec);
-  console.log("simple regex: ", regex_spec);
+  // console.log("real regex: ", regex_spec);
   const ast = regexpTree.parse(`/${regex_spec}/`);
   regexpTree.traverse(ast, {
     "*": function ({ node }) {
@@ -154,7 +159,9 @@ function simplifyGraph(regex) {
     },
   });
 
+  // const regex_spec2 = "d(b|\\+)d";
   const graph_json = compile(regex_spec);
+  // console.log("graph: ", graph_json);
   const N = graph_json.length;
   states = [];
   alphabets = new Set();
@@ -409,19 +416,14 @@ module.exports = {
   matchSubfromDFA,
 };
 
-// TEST
-
-const regex = "send ($)?[0-9]+(.[0-9]+)? (usdc|dai|eth) ";
+// TEST send money
+const regex = "[Ss]end ($)?[0-9]+(.[0-9]+)? (usdc|dai|eth) ";
 const text_test =
-  "i send 54.3 eth to you but 6 daid back send 7.89 dai , send $43.1 eth ";
-
-// const regex = " [a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+.[a-zA-Z0-9]+ ";
-// const regex = ' [a-z"]+';
-// const text = 'asdfa sa_fs-"d%s@gmail.com asdfas';
+  "i send 54.3 eth to you but 6 daid back send 7.89 dai , Send $43.1 usdc ";
 
 console.log("OG regex: ", regex);
 const simp_graph = simplifyGraph(regex);
-console.log("simp graph: ", simp_graph);
+// console.log("simp graph: ", simp_graph);
 const [substrings, indexes] = findSubstrings(simp_graph, text_test);
 console.log("text: ", text_test);
 console.log("match_substring: ", substrings);
@@ -442,11 +444,46 @@ const states_fromSubstring = matchDFAfromSub(
 console.log("DFA state from substring: ", states_fromSubstring);
 
 console.log(
-  "index of ALL substrings from DFA states: ",
+  "Extracted substring from DFA states: ",
   indexToText(
     text_test,
     matchSubfromDFA(simp_graph, text_test, indexes, states_fromSubstring)
   )
 );
 
-// export default { matchDFAfromSub, matchSubfromDFA };
+// Test Header Email (without caret)
+// const regex2 =
+//   '(([Ff]rom:([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>)?|(subject:[a-zA-Z 0-9]+)?|((to):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>)?)';
+const regex2 =
+  '(([Ff]rom:([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-\\+]+@[a-zA-Z0-9_.]+>)?)';
+const text_test2 = "asdfasdFrom: 17013 <notifi+cations@github.com>asdfas";
+
+console.log("OG regex: ", regex2);
+const simp_graph2 = simplifyGraph(regex2);
+// console.log("simp graph: ", simp_graph2);
+const [substrings2, indexes2] = findSubstrings(simp_graph2, text_test2);
+console.log("text: ", text_test2);
+console.log("match_substring: ", substrings2);
+console.log("match_index: ", indexes2);
+console.log("\n  ");
+
+// Highlight substring in any regex we matched
+const substring2 = [20, 38];
+console.log("select substring: ", substring2);
+// console.log("substring: ", indexToText(text_test2, [substring2]));
+// // // Given DFA
+const states_fromSubstring2 = matchDFAfromSub(
+  simp_graph2,
+  indexes2,
+  substring2,
+  text_test2
+);
+console.log("DFA state from substring: ", states_fromSubstring2);
+
+console.log(
+  "Extracted substring from DFA states: ",
+  indexToText(
+    text_test2,
+    matchSubfromDFA(simp_graph2, text_test2, indexes2, states_fromSubstring2)
+  )
+);
