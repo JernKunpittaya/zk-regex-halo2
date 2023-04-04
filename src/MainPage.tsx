@@ -10,6 +10,16 @@ import styled, { CSSProperties } from "styled-components";
 import { Highlighter } from "./components/Highlighter";
 import { HighlightedText } from "./components/HighlightedText";
 import { Button } from "./components/Button";
+import { match } from "assert";
+import { generate } from "regexp-tree";
+import { RegexInput } from "./components/RegexInput";
+
+const {
+  simplifyGraph,
+  findSubstrings,
+  matchDFAfromSub,
+  matchSubfromDFA
+} = require('./gen') ;
 
 // takes in a regex to be represented into a DFA
 
@@ -21,20 +31,69 @@ import { Button } from "./components/Button";
 
 type HighlightObject =  Record<string, number[]>;
 type ColorObject = Record<string, string>
+type UserHighlightObject = Record<string, [number[]]>
+type DFAGraphObject = Record<string, [Set<number>[]]>
 
 
 export const MainPage: React.FC<{}> = (props) => {
-  const text = "Some sample text to be highlighted."
-  const [userHighlights, setUserHighlights] = useState<HighlightObject>({});
+  const text = "accttsdM1aatasdfu]kktjjllM1233vdt[tM155aaatad]sfl;jasd;flkM15adt"
+  const testRegex = "M(1|2|3|4|5)*(a|v|d|u)*t"
+
+  const [userHighlights, setUserHighlights] = useState<UserHighlightObject>({});
   const [userColors, setUserColors] = useState<ColorObject>({});
   const [newHighlight, setNewHighlight] = useState<HighlightObject>({});
   const [newColor, setNewColor] = useState<ColorObject>({});
-  const [DFAStates, setDFAStates] = useState({})
-  const prevUserHighlights = usePrevious(userHighlights);
+  const [DFAStates, setDFAStates] = useState({});
+  const [regex, setRegex] = useState<string>("");
+  const [displayMessage, setDisplayMessage] = useState<string>("Convert to DFA!");
+  const [rawDFA, setRawDFA] = useState<DFAGraphObject>({})
+  const [convertActive, setConvertActive] = useState<Boolean>(false);
+
+  // const prevUserHighlights = usePrevious(userHighlights);
+
+  // =================== Compile Functions =================== //
+
+  function generateSegments(regex: string, idxPair: number[]) {
+    console.log("idxPair, ", idxPair)
+    const graph = simplifyGraph(regex)
+    const [substr, idxs] = findSubstrings(graph, text)
+    const states = matchDFAfromSub(graph, idxs, idxPair, text)
+
+    const final = matchSubfromDFA(graph, text, idxs, states)
+    return [states, final]
+  }
+
+
+  // ================== DFA functions =================== //
+
+  function handleGenerateDFA() {
+    const graph = simplifyGraph(regex)
+    setRawDFA(graph)
+  }
+
+  function handleUpdateDFA() {
+    return
+  }
+
+  useEffect (() => {
+    if (convertActive) {
+      handleGenerateDFA()
+      console.log('DFA ', rawDFA) // rawDFA is always behind???? we need some argument to pass this in at a timely manner
+      setConvertActive(false)
+    } 
+  }, [convertActive]);
+
+
+  // =============== Text Highlight functions ================ //
 
   function handleUpdateHighlight(newData: HighlightObject) {
+    const key = Object.keys(newData)[0]
+    const raw = newData[key]
+    const processedSegments: Record<string, [number[]]> = {}
+    processedSegments[key] = generateSegments(testRegex, raw)[1]
+
     setUserHighlights((prevState) => {
-      const updatedState = {...prevState, ...newData};
+      const updatedState = {...prevState, ...processedSegments};
       return updatedState
     });
   };
@@ -46,30 +105,39 @@ export const MainPage: React.FC<{}> = (props) => {
     });
   };
 
-  function usePrevious<highlights>(value: highlights): highlights | undefined {
-    const ref = useRef<highlights>()
-
-    useEffect(() => {
-      ref.current = value //updates current ref value
-    }, [value])
-
-    return ref.current
-  };
-
   useUpdateEffect(() => {
     handleUpdateHighlight(newHighlight)
-    console.log(userHighlights)
   }, [newHighlight]);
 
   useUpdateEffect(()=>  {
     handleUpdateColor(newColor)
   }, [newColor])
 
-  
+  // =================== Rendering ==================== //
 
     return (
         <Container>
-          {/* <RegexInput> */}
+          <RegexInput
+          label="Enter your regex here:"
+          value={regex}
+          onChange={(e) => {
+            console.log(regex)
+            setRegex(e.currentTarget.value);
+          }}
+          />
+          <Button
+          disabled={displayMessage != "Convert to DFA!" || regex.length === 0}
+          onClick={async () => {
+            console.log("yes")
+            setConvertActive(true)
+            setDisplayMessage("Generating DFA...")
+            await handleGenerateDFA()
+            setDisplayMessage("Convert to DFA!")
+          }}
+          >
+            {displayMessage}
+          </Button>
+
           {/* <TextInput> => passes down to highlighter */}
             <Highlighter
             sampleText={text}
@@ -77,12 +145,12 @@ export const MainPage: React.FC<{}> = (props) => {
             setNewHighlight={setNewHighlight}
             newColor={{}}
             setNewColor={setNewColor}/> {/* returns highlightedText */}
-          {/* <Button> press this to pass down */}
 
           <HighlightedText
           userHighlights={userHighlights}
           sampleText={text}
           userColors={userColors}/>
+
           {/* <MinDFA> */}
         </Container>
     );

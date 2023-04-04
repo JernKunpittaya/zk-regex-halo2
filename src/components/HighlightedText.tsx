@@ -2,12 +2,12 @@ import React, { useState, FC } from 'react';
 
 // should await 
 
-type HighlightObject =  Record<string, number[]>;
+type UserHighlightObject =  Record<string, [number[]]>;
 
 type ColorObject = Record<string, string>
 
 interface props {
-  userHighlights: HighlightObject
+  userHighlights: UserHighlightObject
   sampleText: string
   userColors: ColorObject
 }
@@ -18,7 +18,7 @@ export const HighlightedText: React.FC<props> = ({ userHighlights, sampleText, u
   console.log(userHighlights)
   const colorSegments = Object.entries(userHighlights).map(([id, indices]) => ({
     id,
-    segments: indices,
+    segments: indices.flat(),
   }));
 
   return (
