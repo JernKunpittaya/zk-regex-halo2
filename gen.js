@@ -449,4 +449,4 @@ console.log(
   )
 );
 
-export default { matchDFAfromSub, matchSubfromDFA };
+// export default { matchDFAfromSub, matchSubfromDFA };
