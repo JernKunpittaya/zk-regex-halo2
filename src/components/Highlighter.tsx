@@ -1,24 +1,32 @@
 import React, { useState, FC } from 'react';
-interface HighlightRecord {
-  [name: string]: number[];
-}
+
 
 // Highlight text on a text input and auto-highlight the rest of the text segments
 // corresponding to the same DFA states.
 
 // Exports allHighlights 
 
+type HighlightObject =  Record<string, number[]>;
+
+type ColorObject = Record<string, string>
+
 const SampleText = "This is a sample text for highlighting.";
 
-export const Highlighter : React.FC<{
+interface props {
   sampleText: string
-}> = ({sampleText}) => {
+  userHighlights: HighlightObject
+  setUserHighlights: React.Dispatch<React.SetStateAction<HighlightObject>>;
+  userColors: ColorObject
+  setUserColors: React.Dispatch<React.SetStateAction<ColorObject>>;
+}
+
+export const Highlighter : React.FC<props> = ({sampleText, userHighlights, setUserHighlights, userColors, setUserColors}) => {
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
   const [highlightName, setHighlightName] = useState('');
-  const [allHighlights, setAllHighlights] = useState({})
+  // const [allHighlights, setAllHighlights] = useState({})
   const [buttonClick, setButtonClick] = useState(0);
-  const [colors, setColors] = useState({})
+  // const [colors, setColors] = useState({})
   const [curColor, setCurColor] = useState("rgba(0, 0, 0, 1)")
   // const [testingOnly, setTestingOnly] = useState({})
 
@@ -49,13 +57,13 @@ export const Highlighter : React.FC<{
       const condensed = highlightedIndices.length === 1 ? [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[0]] : [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[highlightedIndices.length - 1]];
       const range = (start: number, end:number) => Array.from(Array(end - start + 1).keys()).map(x => x + start);
       const testing = range(condensed[0], condensed[1])
-      setAllHighlights((prevState) => ({ ...prevState, [name]: condensed}));
-      setColors((prevState) => ({ ...prevState, [name]: curColor}));
+      setUserHighlights((prevState) => ({ ...prevState, [name]: condensed}));
+
+      setUserColors((prevState) => ({ ...prevState, [name]: curColor}));
       // setTestingOnly((prevState) => ({...prevState, [name]: testing}));
       setHighlightedIndices([]);
     }
     setButtonClick(buttonClick+1)
-
     
   };
 
@@ -78,9 +86,9 @@ export const Highlighter : React.FC<{
 
       {/* Highlighted Text Below: maybe the two files should still be separated? */}
 
-      <HighlightedText highlights={allHighlights} sampleText={sampleText} usedColors={colors}/>
+      {/* <HighlightedText highlights={allHighlights} sampleText={sampleText} usedColors={colors}/> */}
       {/* <HighlightedText highlights={testingOnly} sampleText={sampleText} usedColors={colors}/> */}
-      <pre>{JSON.stringify(allHighlights, null, 2)}</pre>
+      <pre>{JSON.stringify(userHighlights, null, 2)}</pre>
       {/* <pre>{JSON.stringify(testingOnly, null, 2)}</pre> */}
     </div>
   );
@@ -90,50 +98,49 @@ export const Highlighter : React.FC<{
 
 /// MUST pass in
 
-type HighlightObject =  Record<string, number[]>;
+// type HighlightObject =  Record<string, number[]>;
 
-type ColorObject = Record<string, string>
+// type ColorObject = Record<string, string>
 
-interface Props {
-  highlights: HighlightObject
-  sampleText: string
-  usedColors: ColorObject
-}
+// interface Props {
+//   highlights: HighlightObject
+//   sampleText: string
+//   usedColors: ColorObject
+// }
 
-const HighlightedText: React.FC<Props> = ({ highlights, sampleText, usedColors }) => {
+// const HighlightedText: React.FC<Props> = ({ highlights, sampleText, usedColors }) => {
 
-  const standardOpacity = 0.5
-  console.log(highlights)
-  const colorSegments = Object.entries(highlights).map(([id, indices]) => ({
-    id,
-    segments: indices,
-  }));
+//   const standardOpacity = 0.5
+//   console.log(highlights)
+//   const colorSegments = Object.entries(highlights).map(([id, indices]) => ({
+//     id,
+//     segments: indices,
+//   }));
 
-  return (
-    <p>
-      {sampleText.split('').map((char, index) => {
-        const segment = colorSegments.find(({ segments }) =>
-          segments.includes(index)
-        );
+//   return (
+//     <p>
+//       {sampleText.split('').map((char, index) => {
+//         const segment = colorSegments.find(({ segments }) =>
+//           segments.includes(index)
+//         );
 
-        if (segment) {
-          // Apply the corresponding color to the character
-          const { id, segments } = segment;
-          return (
-            <mark
-            className='highlight'
-            key={index} style={{ backgroundColor: usedColors[id], opacity: standardOpacity }}>
-              {char}
-            </mark>
-          );
-        } else {
+//         if (segment) {
+//           // Apply the corresponding color to the character
+//           const { id, segments } = segment;
+//           return (
+//             <mark
+//             className='highlight'
+//             key={index} style={{ backgroundColor: usedColors[id], opacity: standardOpacity }}>
+//               {char}
+//             </mark>
+//           );
+//         } else {
 
-          return char;
-        }
-      })}
-    </p>
-  );
-}
+//           return char;
+//         }
+//       })}
+//     </p>
+//   );
 
 
 // 1. user highlights sections of sample text
