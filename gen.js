@@ -448,3 +448,5 @@ console.log(
     matchSubfromDFA(simp_graph, text_test, indexes, states_fromSubstring)
   )
 );
+
+export default { matchDFAfromSub, matchSubfromDFA };

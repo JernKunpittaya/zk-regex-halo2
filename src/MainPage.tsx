@@ -1,5 +1,5 @@
 // @ts-ignore
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useRef, useEffect, useMemo, useState } from "react";
 import { useAsync, useMount, useUpdateEffect } from "react-use";
 // @ts-ignore
 // @ts-ignore
@@ -24,18 +24,46 @@ type ColorObject = Record<string, string>
 
 
 export const MainPage: React.FC<{}> = (props) => {
-
   const text = "Some sample text to be highlighted."
   const [userHighlights, setUserHighlights] = useState<HighlightObject>({});
   const [userColors, setUserColors] = useState<ColorObject>({});
+  const [newHighlight, setNewHighlight] = useState<HighlightObject>({});
+  const [newColor, setNewColor] = useState<ColorObject>({});
+  const [DFAStates, setDFAStates] = useState({})
+  const prevUserHighlights = usePrevious(userHighlights);
+
+  function handleUpdateHighlight(newData: HighlightObject) {
+    setUserHighlights((prevState) => {
+      const updatedState = {...prevState, ...newData};
+      return updatedState
+    });
+  };
+
+  function handleUpdateColor(newData: ColorObject) {
+    setUserColors((prevState) => {
+      const updatedState = {...prevState, ...newData};
+      return updatedState
+    });
+  };
+
+  function usePrevious<highlights>(value: highlights): highlights | undefined {
+    const ref = useRef<highlights>()
+
+    useEffect(() => {
+      ref.current = value //updates current ref value
+    }, [value])
+
+    return ref.current
+  };
 
   useUpdateEffect(() => {
-
-  }, [userHighlights]);
+    handleUpdateHighlight(newHighlight)
+    console.log(userHighlights)
+  }, [newHighlight]);
 
   useUpdateEffect(()=>  {
-
-  }, [userColors])
+    handleUpdateColor(newColor)
+  }, [newColor])
 
   
 
@@ -45,13 +73,16 @@ export const MainPage: React.FC<{}> = (props) => {
           {/* <TextInput> => passes down to highlighter */}
             <Highlighter
             sampleText={text}
-            userHighlights={userHighlights}
-            setUserHighlights={setUserHighlights}
-            userColors={userColors}
-            setUserColors={setUserColors}/> {/* returns highlightedText */}
+            newHighlight={{}}
+            setNewHighlight={setNewHighlight}
+            newColor={{}}
+            setNewColor={setNewColor}/> {/* returns highlightedText */}
           {/* <Button> press this to pass down */}
 
-          <HighlightedText highlights={userHighlights} sampleText={text} usedColors={userColors}/>
+          <HighlightedText
+          userHighlights={userHighlights}
+          sampleText={text}
+          userColors={userColors}/>
           {/* <MinDFA> */}
         </Container>
     );
