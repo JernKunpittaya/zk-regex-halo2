@@ -212,7 +212,7 @@ function simplifyGraph(regex) {
       or_stops.add(state);
     }
   }
-  console.log("or_sets: ", or_sets);
+  // console.log("or_sets: ", or_sets);
   // deal with or_stops
   for (let state in rev_transitions) {
     let tmp_set = new Set();
@@ -230,7 +230,7 @@ function simplifyGraph(regex) {
     }
   }
 
-  console.log("or_stops: ", or_stops);
+  // console.log("or_stops: ", or_stops);
 
   let or_sets_all = [];
   // simulate till or_stops
@@ -260,7 +260,7 @@ function simplifyGraph(regex) {
       or_set = new Set(clone_or_set);
       // console.log("or_set: ", or_set);
     }
-    console.log("or_set_all: ", or_set_all);
+    // console.log("or_set_all: ", or_set_all);
     or_sets_all.push(or_set_all);
   }
   // console.log("transition: ", transitions);
@@ -387,7 +387,8 @@ const text = "i send 54.3 eth to you but 6 daid back 7.89 dai , got $43.1 eth ";
 // const regex = " [a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+.[a-zA-Z0-9]+ ";
 // const regex = ' [a-z"]+';
 // const text = 'asdfa sa_fs-"d%s@gmail.com asdfas';
-simplifyGraph(regex);
+const simp_graph = simplifyGraph(regex);
+console.log("or sets: ", simp_graph["or_sets"]);
 
 // let test_set = new Set();
 // test_set.add([2, 2].toString());
