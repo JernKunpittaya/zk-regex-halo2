@@ -7,16 +7,16 @@ type HighlightObject =  Record<string, number[]>;
 type ColorObject = Record<string, string>
 
 interface props {
-  highlights: HighlightObject
+  userHighlights: HighlightObject
   sampleText: string
-  usedColors: ColorObject
+  userColors: ColorObject
 }
 
-export const HighlightedText: React.FC<props> = ({ highlights, sampleText, usedColors }) => {
+export const HighlightedText: React.FC<props> = ({ userHighlights, sampleText, userColors }) => {
 
   const standardOpacity = 0.5
-  console.log(highlights)
-  const colorSegments = Object.entries(highlights).map(([id, indices]) => ({
+  console.log(userHighlights)
+  const colorSegments = Object.entries(userHighlights).map(([id, indices]) => ({
     id,
     segments: indices,
   }));
@@ -34,7 +34,7 @@ export const HighlightedText: React.FC<props> = ({ highlights, sampleText, usedC
           return (
             <mark
             className='highlight'
-            key={index} style={{ backgroundColor: usedColors[id], opacity: standardOpacity }}>
+            key={index} style={{ backgroundColor: userColors[id], opacity: standardOpacity }}>
               {char}
             </mark>
           );
@@ -43,6 +43,8 @@ export const HighlightedText: React.FC<props> = ({ highlights, sampleText, usedC
           return char;
         }
       })}
+      <pre>{JSON.stringify(userHighlights, null, 2)}</pre>
     </p>
+    
   );
 }

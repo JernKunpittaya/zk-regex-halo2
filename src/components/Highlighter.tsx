@@ -1,6 +1,5 @@
 import React, { useState, FC } from 'react';
 
-
 // Highlight text on a text input and auto-highlight the rest of the text segments
 // corresponding to the same DFA states.
 
@@ -14,13 +13,13 @@ const SampleText = "This is a sample text for highlighting.";
 
 interface props {
   sampleText: string
-  userHighlights: HighlightObject
-  setUserHighlights: React.Dispatch<React.SetStateAction<HighlightObject>>;
-  userColors: ColorObject
-  setUserColors: React.Dispatch<React.SetStateAction<ColorObject>>;
+  newHighlight: HighlightObject
+  setNewHighlight: React.Dispatch<React.SetStateAction<HighlightObject>>;
+  newColor: ColorObject
+  setNewColor: React.Dispatch<React.SetStateAction<ColorObject>>;
 }
 
-export const Highlighter : React.FC<props> = ({sampleText, userHighlights, setUserHighlights, userColors, setUserColors}) => {
+export const Highlighter : React.FC<props> = ({sampleText, newHighlight, setNewHighlight, newColor, setNewColor}) => {
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
   const [highlightName, setHighlightName] = useState('');
@@ -57,9 +56,8 @@ export const Highlighter : React.FC<props> = ({sampleText, userHighlights, setUs
       const condensed = highlightedIndices.length === 1 ? [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[0]] : [highlightedIndices.sort((a, b) => a-b)[0], highlightedIndices.sort((a, b) => a-b)[highlightedIndices.length - 1]];
       const range = (start: number, end:number) => Array.from(Array(end - start + 1).keys()).map(x => x + start);
       const testing = range(condensed[0], condensed[1])
-      setUserHighlights((prevState) => ({ ...prevState, [name]: condensed}));
-
-      setUserColors((prevState) => ({ ...prevState, [name]: curColor}));
+      setNewHighlight({name: condensed});
+      setNewColor({name: curColor});
       // setTestingOnly((prevState) => ({...prevState, [name]: testing}));
       setHighlightedIndices([]);
     }
@@ -83,66 +81,6 @@ export const Highlighter : React.FC<props> = ({sampleText, userHighlights, setUs
       <button onClick={isHighlighting ? handleEndHighlight : handleBeginHighlight}>
         {isHighlighting ? 'End Highlight' : 'Begin New Highlight'}
       </button>
-
-      {/* Highlighted Text Below: maybe the two files should still be separated? */}
-
-      {/* <HighlightedText highlights={allHighlights} sampleText={sampleText} usedColors={colors}/> */}
-      {/* <HighlightedText highlights={testingOnly} sampleText={sampleText} usedColors={colors}/> */}
-      <pre>{JSON.stringify(userHighlights, null, 2)}</pre>
-      {/* <pre>{JSON.stringify(testingOnly, null, 2)}</pre> */}
     </div>
   );
 };
-
-
-
-/// MUST pass in
-
-// type HighlightObject =  Record<string, number[]>;
-
-// type ColorObject = Record<string, string>
-
-// interface Props {
-//   highlights: HighlightObject
-//   sampleText: string
-//   usedColors: ColorObject
-// }
-
-// const HighlightedText: React.FC<Props> = ({ highlights, sampleText, usedColors }) => {
-
-//   const standardOpacity = 0.5
-//   console.log(highlights)
-//   const colorSegments = Object.entries(highlights).map(([id, indices]) => ({
-//     id,
-//     segments: indices,
-//   }));
-
-//   return (
-//     <p>
-//       {sampleText.split('').map((char, index) => {
-//         const segment = colorSegments.find(({ segments }) =>
-//           segments.includes(index)
-//         );
-
-//         if (segment) {
-//           // Apply the corresponding color to the character
-//           const { id, segments } = segment;
-//           return (
-//             <mark
-//             className='highlight'
-//             key={index} style={{ backgroundColor: usedColors[id], opacity: standardOpacity }}>
-//               {char}
-//             </mark>
-//           );
-//         } else {
-
-//           return char;
-//         }
-//       })}
-//     </p>
-//   );
-
-
-// 1. user highlights sections of sample text
-// 2. press a button to confirm these are the states they want
-// 3. 
