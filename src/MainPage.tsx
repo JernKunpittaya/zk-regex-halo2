@@ -12,6 +12,7 @@ import { HighlightedText } from "./components/HighlightedText";
 import { Button } from "./components/Button";
 import { match } from "assert";
 import { generate } from "regexp-tree";
+import { RegexInput } from "./components/RegexInput";
 
 const {
   simplifyGraph,
@@ -31,11 +32,26 @@ const {
 type HighlightObject =  Record<string, number[]>;
 type ColorObject = Record<string, string>
 type UserHighlightObject = Record<string, [number[]]>
+type DFAGraphObject = Record<string, [Set<number>[]]>
 
 
 export const MainPage: React.FC<{}> = (props) => {
   const text = "accttsdM1aatasdfu]kktjjllM1233vdt[tM155aaatad]sfl;jasd;flkM15adt"
   const testRegex = "M(1|2|3|4|5)*(a|v|d|u)*t"
+
+  const [userHighlights, setUserHighlights] = useState<UserHighlightObject>({});
+  const [userColors, setUserColors] = useState<ColorObject>({});
+  const [newHighlight, setNewHighlight] = useState<HighlightObject>({});
+  const [newColor, setNewColor] = useState<ColorObject>({});
+  const [DFAStates, setDFAStates] = useState({});
+  const [regex, setRegex] = useState<string>("");
+  const [displayMessage, setDisplayMessage] = useState<string>("Convert to DFA!");
+  const [rawDFA, setRawDFA] = useState<DFAGraphObject>({})
+  const [convertActive, setConvertActive] = useState<Boolean>(false);
+
+  // const prevUserHighlights = usePrevious(userHighlights);
+
+  // =================== Compile Functions =================== //
 
   function generateSegments(regex: string, idxPair: number[]) {
     console.log("idxPair, ", idxPair)
@@ -47,24 +63,28 @@ export const MainPage: React.FC<{}> = (props) => {
     return [states, final]
   }
 
-  const [userHighlights, setUserHighlights] = useState<UserHighlightObject>({});
-  const [userColors, setUserColors] = useState<ColorObject>({});
-  const [newHighlight, setNewHighlight] = useState<HighlightObject>({});
-  const [newColor, setNewColor] = useState<ColorObject>({});
-  const [DFAStates, setDFAStates] = useState({})
-  // const prevUserHighlights = usePrevious(userHighlights);
 
-  function usePrevious<highlights>(value: highlights): highlights | undefined {
-    const ref = useRef<highlights>()
+  // ================== DFA functions =================== //
 
-    useEffect(() => {
-      ref.current = value //updates current ref value
-    }, [value])
+  function handleGenerateDFA() {
+    const graph = simplifyGraph(regex)
+    setRawDFA(graph)
+  }
 
-    return ref.current
-  };
+  function handleUpdateDFA() {
+    return
+  }
 
-  // Highlight functions
+  useEffect (() => {
+    if (convertActive) {
+      handleGenerateDFA()
+      console.log('DFA ', rawDFA) // rawDFA is always behind???? we need some argument to pass this in at a timely manner
+      setConvertActive(false)
+    } 
+  }, [convertActive]);
+
+
+  // =============== Text Highlight functions ================ //
 
   function handleUpdateHighlight(newData: HighlightObject) {
     const key = Object.keys(newData)[0]
@@ -85,7 +105,6 @@ export const MainPage: React.FC<{}> = (props) => {
     });
   };
 
-
   useUpdateEffect(() => {
     handleUpdateHighlight(newHighlight)
   }, [newHighlight]);
@@ -94,11 +113,31 @@ export const MainPage: React.FC<{}> = (props) => {
     handleUpdateColor(newColor)
   }, [newColor])
 
-  
+  // =================== Rendering ==================== //
 
     return (
         <Container>
-          {/* <RegexInput> */}
+          <RegexInput
+          label="Enter your regex here:"
+          value={regex}
+          onChange={(e) => {
+            console.log(regex)
+            setRegex(e.currentTarget.value);
+          }}
+          />
+          <Button
+          disabled={displayMessage != "Convert to DFA!" || regex.length === 0}
+          onClick={async () => {
+            console.log("yes")
+            setConvertActive(true)
+            setDisplayMessage("Generating DFA...")
+            await handleGenerateDFA()
+            setDisplayMessage("Convert to DFA!")
+          }}
+          >
+            {displayMessage}
+          </Button>
+
           {/* <TextInput> => passes down to highlighter */}
             <Highlighter
             sampleText={text}

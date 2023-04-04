@@ -1,7 +1,9 @@
+//upon clicked, sends whatever state the regex is at currently to be parsed into DFA
+
 import styled from "styled-components";
 
 export const Button = styled.button`
-  padding: 0 14px;
+  padding: 14px;
   border-radius: 4px;
   background: #8272e4;
   border: none;
@@ -13,7 +15,7 @@ export const Button = styled.button`
   letter-spacing: -0.02em;
   color: #fff;
   cursor: pointer;
-  height: 48px;
+  height: 40px;
   width: 100%;
   min-width: 32px;
   transition: all 0.2s ease-in-out;
