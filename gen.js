@@ -208,7 +208,6 @@ function simplifyGraph(regex) {
 
     if (tmp_set.size > 1) {
       or_sets.push(tmp_set);
-      // console.log("here: ", typeof state);
       or_stops.add(state);
     }
   }
@@ -239,7 +238,6 @@ function simplifyGraph(regex) {
     let clone_or_set;
     while (or_set.size > 0) {
       clone_or_set = new Set();
-      // console.log("hey: ", or_set);
       for (let ele of or_set) {
         or_set_all.add(ele);
         let next_state = ele.split(",")[1];
@@ -258,9 +256,8 @@ function simplifyGraph(regex) {
         }
       }
       or_set = new Set(clone_or_set);
-      // console.log("or_set: ", or_set);
     }
-    // console.log("or_set_all: ", or_set_all);
+
     or_sets_all.push(or_set_all);
   }
   // console.log("transition: ", transitions);
@@ -274,10 +271,6 @@ function simplifyGraph(regex) {
     transitions: transitions,
     or_sets: or_sets_all,
   };
-  //   console.log("f states ", states);
-  //   console.log("f alph ", alphabets);
-  //   console.log("f acc ", accepted_states);
-  //   console.log("f trans ", transitions);
 }
 
 // Define a function to check whether a string is accepted by the finite automata
@@ -285,9 +278,6 @@ function accepts(simp_graph, str) {
   let state = simp_graph["start_state"];
   for (let i = 0; i < str.length; i++) {
     const symbol = str[i];
-    // console.log("state ", state);
-    // console.log("sym ", symbol);
-    // console.log("lala ", simp_graph["transitions"][3]["a"]);
     if (simp_graph["transitions"][state][symbol]) {
       state = simp_graph["transitions"][state][symbol];
     } else {
@@ -340,7 +330,7 @@ function matchSubfromDFA(simp_graph, text, indexes, states) {
 
 // match from text to DFA. Flow can be one substring --> state --> to all substrings
 // this function support only one continuous substring
-function matchDFAfromSub(simp_graph, indexes, sub_index) {
+function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
   // sub_index = [i, j] non inclusive
   // indexes = sth like [ [ 3, 10 ], [ 18, 20 ], [ 20, 30 ], [ 44, 48 ] ]
   // find which indexes our sub_index belongs to
@@ -369,7 +359,47 @@ function matchDFAfromSub(simp_graph, indexes, sub_index) {
     state = next_state;
   }
   // return the reveal position of substring extraction.
-  return states;
+  // console.log("states");
+  // check with the or_sets first!
+  // console.log("og states", states);
+  let final_states = {};
+  for (const state in states) {
+    for (const next_state of states[state]) {
+      if (!(state in final_states)) {
+        final_states[state] = new Set();
+      }
+      final_states[state].add(next_state);
+      for (const or_set in simp_graph["or_sets"]) {
+        if (simp_graph["or_sets"][or_set].has([state, next_state].toString())) {
+          for (const ele of simp_graph["or_sets"][or_set]) {
+            if (!(ele.split(",")[0] in final_states)) {
+              final_states[ele.split(",")[0]] = new Set();
+            }
+            final_states[ele.split(",")[0]].add(ele.split(",")[1]);
+          }
+          break;
+        }
+      }
+    }
+  }
+  return final_states;
+}
+
+function indexToText(text, index_array) {
+  //indexes = [
+  //   [ 8, 9, 10, 11, 12, 13 ],
+  //   [ 45, 46, 48 ],
+  //   [ 62, 63, 64, 65, 66, 67 ]
+  // ]
+  let result = [];
+  for (const indexes of index_array) {
+    let sub_result = "";
+    for (const index of indexes) {
+      sub_result += text[index];
+    }
+    result.push(sub_result);
+  }
+  return result;
 }
 
 module.exports = {
@@ -381,45 +411,40 @@ module.exports = {
 
 // TEST
 
-const regex = " [0-9]+(.[0-9]+)? dk(usdc|dai|eth) ";
-const text = "i send 54.3 eth to you but 6 daid back 7.89 dai , got $43.1 eth ";
+const regex = "send ($)?[0-9]+(.[0-9]+)? (usdc|dai|eth) ";
+const text_test =
+  "i send 54.3 eth to you but 6 daid back send 7.89 dai , send $43.1 eth ";
 
 // const regex = " [a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+.[a-zA-Z0-9]+ ";
 // const regex = ' [a-z"]+';
 // const text = 'asdfa sa_fs-"d%s@gmail.com asdfas';
+
+console.log("OG regex: ", regex);
 const simp_graph = simplifyGraph(regex);
-console.log("or sets: ", simp_graph["or_sets"]);
-
-// let test_set = new Set();
-// test_set.add([2, 2].toString());
-// console.log(test_set);
-// test_set.add([1, 2].toString());
-// console.log(test_set);
-// for (let ele of test_set) {
-//   console.log("yo: ", typeof ele[0]);
-//   console.log("yo: ", typeof ele[1]);
-// }
-// console.log(test_set.has([1, 2].toString()));
-// console.log(test_set);
-
-// console.log("OG regex: ", regex);
-// const simp_graph = simplifyGraph(regex);
-// console.log("simp graph: ", simp_graph);
-// const [substrings, indexes] = findSubstrings(simp_graph, text);
-// console.log("text: ", text);
-// console.log("match_substring: ", substrings);
-// console.log("match_index: ", indexes);
-// console.log("\n  ");
+console.log("simp graph: ", simp_graph);
+const [substrings, indexes] = findSubstrings(simp_graph, text_test);
+console.log("text: ", text_test);
+console.log("match_substring: ", substrings);
+console.log("match_index: ", indexes);
+console.log("\n  ");
 
 // Highlight substring in any regex we matched
-// const substring = [7, 13];
-// console.log("select substring: ", substring);
+const substring = [7, 14];
+console.log("select substring: ", substring);
 
 // // Given DFA
-// const states_fromSubstring = matchDFAfromSub(simp_graph, indexes, substring);
-// console.log("DFA state from substring: ", states_fromSubstring);
+const states_fromSubstring = matchDFAfromSub(
+  simp_graph,
+  indexes,
+  substring,
+  text_test
+);
+console.log("DFA state from substring: ", states_fromSubstring);
 
-// console.log(
-//   "index of ALL substrings from DFA states: ",
-//   matchSubfromDFA(simp_graph, text, indexes, states_fromSubstring)
-// );
+console.log(
+  "index of ALL substrings from DFA states: ",
+  indexToText(
+    text_test,
+    matchSubfromDFA(simp_graph, text_test, indexes, states_fromSubstring)
+  )
+);
