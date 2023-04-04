@@ -423,3 +423,5 @@ console.log("or sets: ", simp_graph["or_sets"]);
 //   "index of ALL substrings from DFA states: ",
 //   matchSubfromDFA(simp_graph, text, indexes, states_fromSubstring)
 // );
+
+export default { matchDFAfromSub , matchSubfromDFA };
