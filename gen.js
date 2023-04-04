@@ -70,13 +70,14 @@ function regexToMinDFASpec(str) {
         // in case with escape +
         if (currChar === "+") {
           currChar = "\\+";
-        } else if (currChar === "n") {
-          currChar = "\\n";
-        } else if (currChar === "t") {
-          currChar = "\\t";
-        } else if (currChar === "r") {
-          currChar = "\\r";
         }
+        // } else if (currChar === "n") {
+        //   currChar = "\\n";
+        // } else if (currChar === "t") {
+        //   currChar = "\\t";
+        // } else if (currChar === "r") {
+        //   currChar = "\\r";
+        // }
       }
       result += insideBrackets ? "|" + currChar : currChar;
       index++;
