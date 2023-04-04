@@ -142,6 +142,8 @@ function compile(regex) {
 
 function simplifyGraph(regex) {
   const regex_spec = regexToMinDFASpec(regex);
+  // console.log("before: ", regex);
+  // console.log("after: ", regex_spec);
   console.log("simple regex: ", regex_spec);
   const ast = regexpTree.parse(`/${regex_spec}/`);
   regexpTree.traverse(ast, {
@@ -159,9 +161,12 @@ function simplifyGraph(regex) {
   start_state = "0";
   accepted_states = new Set();
   transitions = {};
+  rev_transitions = {};
+  or_sets = [];
   for (let i = 0; i < N; i++) {
     states.push(i.toString());
     transitions[i.toString()] = {};
+    rev_transitions[i.toString()] = {};
   }
 
   //loop through all the graph
@@ -180,16 +185,94 @@ function simplifyGraph(regex) {
             alphabets.add(alp);
           }
           transitions[i][alp] = graph_json[i]["edges"][key].toString();
+          if (!(i in rev_transitions[graph_json[i]["edges"][key].toString()])) {
+            rev_transitions[graph_json[i]["edges"][key].toString()][i] = [];
+          }
+          rev_transitions[graph_json[i]["edges"][key].toString()][i].push(alp);
         }
       }
     }
   }
+  let or_stops = new Set();
+  // now use transitions to construct or_sets
+  for (let state in transitions) {
+    let tmp_set = new Set();
+    if (Object.keys(transitions[state]).length > 1) {
+      tmp_set = new Set();
+      for (let alp in transitions[state]) {
+        if (transitions[state][alp] != state) {
+          tmp_set.add([state, transitions[state][alp]].toString());
+        }
+      }
+    }
+
+    if (tmp_set.size > 1) {
+      or_sets.push(tmp_set);
+      // console.log("here: ", typeof state);
+      or_stops.add(state);
+    }
+  }
+  console.log("or_sets: ", or_sets);
+  // deal with or_stops
+  for (let state in rev_transitions) {
+    let tmp_set = new Set();
+    if (Object.keys(rev_transitions[state]).length > 1) {
+      tmp_set = new Set();
+      for (let prev_state in rev_transitions[state]) {
+        if (prev_state != state) {
+          tmp_set.add([state, prev_state].toString());
+        }
+      }
+    }
+
+    if (tmp_set.size > 1) {
+      or_stops.add(state);
+    }
+  }
+
+  console.log("or_stops: ", or_stops);
+
+  let or_sets_all = [];
+  // simulate till or_stops
+  for (let or_set of or_sets) {
+    let or_set_all = new Set();
+    let clone_or_set;
+    while (or_set.size > 0) {
+      clone_or_set = new Set();
+      // console.log("hey: ", or_set);
+      for (let ele of or_set) {
+        or_set_all.add(ele);
+        let next_state = ele.split(",")[1];
+        if (!or_stops.has(next_state)) {
+          for (let alp in transitions[next_state]) {
+            if (
+              !or_set_all.has(
+                [next_state, transitions[next_state][alp]].toString()
+              )
+            ) {
+              clone_or_set.add(
+                [next_state, transitions[next_state][alp]].toString()
+              );
+            }
+          }
+        }
+      }
+      or_set = new Set(clone_or_set);
+      // console.log("or_set: ", or_set);
+    }
+    console.log("or_set_all: ", or_set_all);
+    or_sets_all.push(or_set_all);
+  }
+  // console.log("transition: ", transitions);
+  // console.log("rev: ", rev_transitions);
+
   return {
     states: states,
     alphabets: alphabets,
     start_state: start_state,
     accepted_states: accepted_states,
     transitions: transitions,
+    or_sets: or_sets_all,
   };
   //   console.log("f states ", states);
   //   console.log("f alph ", alphabets);
@@ -298,27 +381,44 @@ module.exports = {
 
 // TEST
 
-const regex = " [0-9]+ (usdc|dai|eth) ";
-const text = "i send 54 eth to you but 6 daid back 7 dai ";
+const regex = " [0-9]+(.[0-9]+)? dk(usdc|dai|eth) ";
+const text = "i send 54.3 eth to you but 6 daid back 7.89 dai , got $43.1 eth ";
 
-console.log("OG regex: ", regex);
-const simp_graph = simplifyGraph(regex);
-console.log("simp graph: ", simp_graph);
-const [substrings, indexes] = findSubstrings(simp_graph, text);
-console.log("text: ", text);
-console.log("match_substring: ", substrings);
-console.log("match_index: ", indexes);
-console.log("\n  ");
+// const regex = " [a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+.[a-zA-Z0-9]+ ";
+// const regex = ' [a-z"]+';
+// const text = 'asdfa sa_fs-"d%s@gmail.com asdfas';
+simplifyGraph(regex);
+
+// let test_set = new Set();
+// test_set.add([2, 2].toString());
+// console.log(test_set);
+// test_set.add([1, 2].toString());
+// console.log(test_set);
+// for (let ele of test_set) {
+//   console.log("yo: ", typeof ele[0]);
+//   console.log("yo: ", typeof ele[1]);
+// }
+// console.log(test_set.has([1, 2].toString()));
+// console.log(test_set);
+
+// console.log("OG regex: ", regex);
+// const simp_graph = simplifyGraph(regex);
+// console.log("simp graph: ", simp_graph);
+// const [substrings, indexes] = findSubstrings(simp_graph, text);
+// console.log("text: ", text);
+// console.log("match_substring: ", substrings);
+// console.log("match_index: ", indexes);
+// console.log("\n  ");
 
 // Highlight substring in any regex we matched
-const substring = [7, 13];
-console.log("select substring: ", substring);
+// const substring = [7, 13];
+// console.log("select substring: ", substring);
 
-// Given DFA
-const states_fromSubstring = matchDFAfromSub(simp_graph, indexes, substring);
-console.log("DFA state from substring: ", states_fromSubstring);
+// // Given DFA
+// const states_fromSubstring = matchDFAfromSub(simp_graph, indexes, substring);
+// console.log("DFA state from substring: ", states_fromSubstring);
 
-console.log(
-  "index of ALL substrings from DFA states: ",
-  matchSubfromDFA(simp_graph, text, indexes, states_fromSubstring)
-);
+// console.log(
+//   "index of ALL substrings from DFA states: ",
+//   matchSubfromDFA(simp_graph, text, indexes, states_fromSubstring)
+// );
