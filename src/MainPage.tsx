@@ -3,16 +3,13 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useAsync, useMount, useUpdateEffect } from "react-use";
 // @ts-ignore
 // @ts-ignore
-
 import _, { add } from "lodash";
 // @ts-ignore
 
 import styled, { CSSProperties } from "styled-components";
-import { Highlighter } from "components/TextHighlight";
-
-var Buffer = require("buffer/").Buffer; // note: the trailing slash is important!
-const generate_input = require("../scripts/generate_input");
-
+import { Highlighter } from "./components/Highlighter";
+import { HighlightedText } from "./components/HighlightedText";
+import { Button } from "./components/Button";
 
 // takes in a regex to be represented into a DFA
 
@@ -22,12 +19,40 @@ const generate_input = require("../scripts/generate_input");
 // 4. user clicks through states of dfa to get desired states we want to extract 
 // 5. user clicks a button to run gen .js to extract text to highlight from input header/body 
 
+type HighlightObject =  Record<string, number[]>;
+type ColorObject = Record<string, string>
+
 
 export const MainPage: React.FC<{}> = (props) => {
 
+  const text = "Some sample text to be highlighted."
+  const [userHighlights, setUserHighlights] = useState<HighlightObject>({});
+  const [userColors, setUserColors] = useState<ColorObject>({});
+
+  useUpdateEffect(() => {
+
+  }, [userHighlights]);
+
+  useUpdateEffect(()=>  {
+
+  }, [userColors])
+
+  
+
     return (
         <Container>
-            <Highlighter/>
+          {/* <RegexInput> */}
+          {/* <TextInput> => passes down to highlighter */}
+            <Highlighter
+            sampleText={text}
+            userHighlights={userHighlights}
+            setUserHighlights={setUserHighlights}
+            userColors={userColors}
+            setUserColors={setUserColors}/> {/* returns highlightedText */}
+          {/* <Button> press this to pass down */}
+
+          <HighlightedText highlights={userHighlights} sampleText={text} usedColors={userColors}/>
+          {/* <MinDFA> */}
         </Container>
     );
 };
