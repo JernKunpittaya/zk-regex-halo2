@@ -232,9 +232,10 @@ function simplifyGraph(regex) {
     if (Object.keys(rev_transitions[state]).length > 1) {
       tmp_set = new Set();
       for (let prev_state in rev_transitions[state]) {
-        if (prev_state != state) {
-          tmp_set.add([state, prev_state].toString());
-        }
+        // All stop can loop to itself
+        // if (prev_state != state) {
+        tmp_set.add([state, prev_state].toString());
+        // }
       }
     }
 
@@ -242,6 +243,7 @@ function simplifyGraph(regex) {
       or_stops.add(state);
     }
   }
+  console.log("STOP: ", or_stops);
 
   // console.log("or_stops: ", or_stops);
 
@@ -376,6 +378,8 @@ function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
   // console.log("states");
   // check with the or_sets first!
   // console.log("og states", states);
+  console.log("OG states: ", states);
+  // console.log("or_sets: ", simp_graph["or_sets"]);
   let final_states = {};
   for (const state in states) {
     for (const next_state of states[state]) {
@@ -458,79 +462,49 @@ module.exports = {
 //   )
 // );
 
-// Test Header Email (without caret)
-// const regex2 =
-//   '(([Ff]rom:([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>)?|(subject:[a-zA-Z 0-9]+)?|((to):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>)?)';
-// const regex2 =
-//   '(([Ff]rom:([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-\\+]+@[a-zA-Z0-9_.]+>)?)';
-// const text_test2 = "asdfasdFrom: 17013 <notifi+cations@github.com>asdfas";
+// Test Header Email (without caret), Support fancy escape \t|\n|\r|\x0b|\x0c (not put \\+ yet, but works)
+const regex2 =
+  '(\n(([Ff]rom:([A-Za-z0-9 _."@-\\+]+<)?[a-zA-Z0-9_.-\\+]+@[a-zA-Z0-9_.]+>)?|([Ss]ubject:[a-zA-Z0-9 ]+)?|([Tt]o:([A-Za-z0-9 _."@-\\+]+<)?[a-zA-Z0-9_.-\\+]+@[a-zA-Z0-9_.]+>)?)\r)+';
+const text_test2 = fs.readFileSync("./email.txt").toString();
 
-// console.log("OG regex: ", regex2);
-// const simp_graph2 = simplifyGraph(regex2);
-// // console.log("simp graph: ", simp_graph2);
-// const [substrings2, indexes2] = findSubstrings(simp_graph2, text_test2);
+console.log("OG regex: ", regex2);
+const simp_graph2 = simplifyGraph(regex2);
+// console.log("simp graph: ", simp_graph2);
+
+const [substrings2, indexes2] = findSubstrings(simp_graph2, text_test2);
 // console.log("text: ", text_test2);
-// console.log("match_substring: ", substrings2);
-// console.log("match_index: ", indexes2);
-// console.log("\n  ");
-
-// // Highlight substring in any regex we matched
-// const substring2 = [20, 38];
-// console.log("select substring: ", substring2);
-// // console.log("substring: ", indexToText(text_test2, [substring2]));
-// // // // Given DFA
-// const states_fromSubstring2 = matchDFAfromSub(
-//   simp_graph2,
-//   indexes2,
-//   substring2,
-//   text_test2
-// );
-// console.log("DFA state from substring: ", states_fromSubstring2);
-
-// console.log(
-//   "Extracted substring from DFA states: ",
-//   indexToText(
-//     text_test2,
-//     matchSubfromDFA(simp_graph2, text_test2, indexes2, states_fromSubstring2)
-//   )
-// );
-
-// Test fancy escape \t|\n|\r|\x0b|\x0c (besides \\+)
-const regex3 = "\nfrom";
-// '(\\n([Ff]rom:([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-\\+]+@[a-zA-Z0-9_.]+>)?)';
-const text_test3 = fs.readFileSync("./email.txt").toString();
-
-// for (let i = 0; i < 4; i++) {
-//   console.log("n test ", i, " ", text_test3[i] == "\n");
-//   console.log("t test ", i, " ", text_test3[i] == "\t");
-//   console.log("r test ", i, " ", text_test3[i] == "\r");
-// }
-console.log("OG regex: ", regex3);
-const simp_graph3 = simplifyGraph(regex3);
-console.log("simp graph: ", simp_graph3);
-const [substrings3, indexes3] = findSubstrings(simp_graph3, text_test3);
-console.log("text: ", text_test3);
-console.log("match_substring: ", substrings3);
-console.log("match_index: ", indexes3);
+console.log("match_substring: ", substrings2);
+console.log("match_index: ", indexes2);
 console.log("\n  ");
 
 // // Highlight substring in any regex we matched
-// const substring2 = [20, 38];
-// console.log("select substring: ", substring2);
-// // console.log("substring: ", indexToText(text_test2, [substring2]));
-// // // // Given DFA
-// const states_fromSubstring2 = matchDFAfromSub(
-//   simp_graph2,
-//   indexes2,
-//   substring2,
-//   text_test2
-// );
-// console.log("DFA state from substring: ", states_fromSubstring2);
+// // For reveal < >
+const substring2 = [4053, 4073];
+// For in front of < >
+// const substring2 = [4048, 4073];
 
-// console.log(
-//   "Extracted substring from DFA states: ",
-//   indexToText(
-//     text_test2,
-//     matchSubfromDFA(simp_graph2, text_test2, indexes2, states_fromSubstring2)
-//   )
-// );
+// For reveal things behind subject
+// const substring2 = [4123, 4140];
+
+console.log("select substring: ", substring2);
+let substring2_print = [];
+for (let i = substring2[0]; i < substring2[1]; i++) {
+  substring2_print.push(i);
+}
+console.log("substring: ", indexToText(text_test2, [substring2_print]));
+// // // // Given DFA
+const states_fromSubstring2 = matchDFAfromSub(
+  simp_graph2,
+  indexes2,
+  substring2,
+  text_test2
+);
+console.log("DFA state from substring: ", states_fromSubstring2);
+
+console.log(
+  "Extracted substring from DFA states: ",
+  indexToText(
+    text_test2,
+    matchSubfromDFA(simp_graph2, text_test2, indexes2, states_fromSubstring2)
+  )
+);
