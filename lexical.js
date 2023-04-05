@@ -190,7 +190,7 @@ function parseRegex(text) {
       i += 1;
     }
   }
-  console.log("new_text: ", new_text);
+  // console.log("new_text: ", new_text);
   return parseSub(new_text, 0, new_text.length, true);
 }
 
