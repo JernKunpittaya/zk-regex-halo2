@@ -445,7 +445,7 @@ module.exports = {
 // const substring = [7, 14];
 // console.log("select substring: ", substring);
 
-// // // Given DFA
+// // Given DFA
 // const states_fromSubstring = matchDFAfromSub(
 //   simp_graph,
 //   indexes,
@@ -465,7 +465,7 @@ module.exports = {
 // Test Header Email (without caret), Support fancy escape \t|\n|\r|\x0b|\x0c (not put \\+ yet, but works)
 const regex2 =
   '(\n(([Ff]rom:([A-Za-z0-9 _."@-\\+]+<)?[a-zA-Z0-9_.-\\+]+@[a-zA-Z0-9_.]+>)?|([Ss]ubject:[a-zA-Z0-9 ]+)?|([Tt]o:([A-Za-z0-9 _."@-\\+]+<)?[a-zA-Z0-9_.-\\+]+@[a-zA-Z0-9_.]+>)?)\r)+';
-const text_test2 = fs.readFileSync("./email.txt").toString();
+const text_test2 = fs.readFileSync("./twitter_reset.txt").toString();
 
 console.log("OG regex: ", regex2);
 const simp_graph2 = simplifyGraph(regex2);
