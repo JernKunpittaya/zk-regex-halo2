@@ -2,6 +2,10 @@ import React, { useState, FC } from 'react';
 import styled from "styled-components";
 import { Col } from "./Layout";
 
+// One-line textbox for user-input Regexes. Compatible with
+// button to create a MinDFA in a GraphDFA object.
+
+
 export const RegexInput: React.FC<{
     label: string;
     value: any;

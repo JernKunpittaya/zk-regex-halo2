@@ -1,13 +1,14 @@
 import React, { useState, FC } from 'react';
+import { Button } from './Button';
 
 // Highlight text on a text input and auto-highlight the rest of the text segments
 // corresponding to the same DFA states.
 
-// Exports allHighlights 
-
 type HighlightObject =  Record<string, number[]>;
 
 type ColorObject = Record<string, string>
+
+type StaticHighlightObject = [number, number][]
 
 const SampleText = "This is a sample text for highlighting.";
 
@@ -17,9 +18,22 @@ interface props {
   setNewHighlight: React.Dispatch<React.SetStateAction<HighlightObject>>;
   newColor: ColorObject
   setNewColor: React.Dispatch<React.SetStateAction<ColorObject>>;
+  staticHighlights: StaticHighlightObject
 }
 
-export const Highlighter : React.FC<props> = ({sampleText, newHighlight, setNewHighlight, newColor, setNewColor}) => {
+
+function unrollRanges(ranges: [number, number][]): number[] {
+  const result: number[] = [];
+  for (const range of ranges) {
+    const [start, end] = range;
+    for (let i = start; i <= end; i++) {
+      result.push(i);
+    }
+  }
+  return result;
+}
+
+export const Highlighter : React.FC<props> = ({sampleText, newHighlight, setNewHighlight, newColor, setNewColor, staticHighlights}) => {
   const [isHighlighting, setIsHighlighting] = useState(false);
   const [highlightedIndices, setHighlightedIndices] = useState<number[]>([]);
   const [highlightName, setHighlightName] = useState('');
@@ -28,6 +42,13 @@ export const Highlighter : React.FC<props> = ({sampleText, newHighlight, setNewH
   // const [colors, setColors] = useState({})
   const [curColor, setCurColor] = useState("rgba(0, 0, 0, 1)")
   // const [testingOnly, setTestingOnly] = useState({})
+
+  const acceptedIdx = unrollRanges(staticHighlights)
+  console.log(acceptedIdx)
+  const rejTextColor = 'rgba(100, 100, 100, 1)' 
+  const accTextColor = 'rgba(255, 255, 255, 1)'
+  const offTextColor = 'rgba(160, 160, 160, 1)' 
+  const real = acceptedIdx.length > 0
 
   const handleHighlight = (index: number) => {
     if (isHighlighting) {
@@ -68,19 +89,27 @@ export const Highlighter : React.FC<props> = ({sampleText, newHighlight, setNewH
   return (
     <div>
       <div>
-        {sampleText.split('').map((char, index) => (
-          <span
+        {sampleText.split('').map((char, index) => {
+          let color = offTextColor
+          if (real) {
+            color = acceptedIdx.includes(index) ? accTextColor : rejTextColor
+          }
+          return (
+            <span
             key={index}
-            style={{ backgroundColor: highlightedIndices.includes(index) ? curColor : 'transparent' }}
+            style={{
+              backgroundColor: highlightedIndices.includes(index) ? curColor : 'transparent',
+              color: color}}
             onClick={() => handleHighlight(index)}
           >
             {char}
           </span>
-        ))}
+          )
+})}
       </div>
-      <button onClick={isHighlighting ? handleEndHighlight : handleBeginHighlight}>
+      <Button onClick={isHighlighting ? handleEndHighlight : handleBeginHighlight}>
         {isHighlighting ? 'End Highlight' : 'Begin New Highlight'}
-      </button>
+      </Button>
     </div>
   );
 };

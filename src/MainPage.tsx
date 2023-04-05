@@ -19,7 +19,7 @@ const {
   findSubstrings,
   matchDFAfromSub,
   matchSubfromDFA
-} = require('./gen') ;
+} = require("./gen") ;
 
 // takes in a regex to be represented into a DFA
 
@@ -28,10 +28,12 @@ const {
 // 3. dfa renders from results of gen.js and is displayed on page
 // 4. user clicks through states of dfa to get desired states we want to extract 
 // 5. user clicks a button to run gen .js to extract text to highlight from input header/body 
+// maybe i should make my other button prettier too... 
 
 type HighlightObject =  Record<string, number[]>;
 type ColorObject = Record<string, string>
 type UserHighlightObject = Record<string, [number[]]>
+type StaticHighlightObject = [number, number][]
 type DFAGraphObject = Record<string, [Set<number>[]]>
 
 
@@ -40,6 +42,7 @@ export const MainPage: React.FC<{}> = (props) => {
   const testRegex = "M(1|2|3|4|5)*(a|v|d|u)*t"
 
   const [userHighlights, setUserHighlights] = useState<UserHighlightObject>({});
+  const [staticHighlights, setStaticHighlights] = useState<StaticHighlightObject>([])
   const [userColors, setUserColors] = useState<ColorObject>({});
   const [newHighlight, setNewHighlight] = useState<HighlightObject>({});
   const [newColor, setNewColor] = useState<ColorObject>({});
@@ -53,14 +56,20 @@ export const MainPage: React.FC<{}> = (props) => {
 
   // =================== Compile Functions =================== //
 
-  function generateSegments(regex: string, idxPair: number[]) {
-    console.log("idxPair, ", idxPair)
+  function generateSegments(regex: string) {
+    // Generate accepted substrings and a function used to 
+    // match segments and states given an index pair.
+
+    // console.log("idxPair, ", idxPair)
     const graph = simplifyGraph(regex)
     const [substr, idxs] = findSubstrings(graph, text)
-    const states = matchDFAfromSub(graph, idxs, idxPair, text)
 
-    const final = matchSubfromDFA(graph, text, idxs, states)
-    return [states, final]
+    function matchSegments(idxPair: number[]) {
+      const states = matchDFAfromSub(graph, idxs, idxPair, text)
+      const final = matchSubfromDFA(graph, text, idxs, states)
+      return [states, final]
+    }
+    return [ idxs, matchSegments ]
   }
 
 
@@ -68,6 +77,7 @@ export const MainPage: React.FC<{}> = (props) => {
 
   function handleGenerateDFA() {
     const graph = simplifyGraph(regex)
+    
     setRawDFA(graph)
   }
 
@@ -79,18 +89,30 @@ export const MainPage: React.FC<{}> = (props) => {
     if (convertActive) {
       handleGenerateDFA()
       console.log('DFA ', rawDFA) // rawDFA is always behind???? we need some argument to pass this in at a timely manner
+      handleUpdateStaticHighlight()
       setConvertActive(false)
-    } 
+    }
   }, [convertActive]);
 
 
   // =============== Text Highlight functions ================ //
 
+  // once a regex is entered, immediately update userHighlights under name accepted--
+  // we can have this be a static highlight maybe? i.e. we store it in a 
+  // putting in a new regex should clear all highlights ==> this is not hard to do!
+  // pass in more arguments through
+
+  function handleUpdateStaticHighlight() {
+    const indices = generateSegments(regex)[0]
+    console.log("reached")
+    setStaticHighlights(indices)
+  }
+
   function handleUpdateHighlight(newData: HighlightObject) {
     const key = Object.keys(newData)[0]
     const raw = newData[key]
     const processedSegments: Record<string, [number[]]> = {}
-    processedSegments[key] = generateSegments(testRegex, raw)[1]
+    processedSegments[key] = generateSegments(testRegex)[1](raw)[1]
 
     setUserHighlights((prevState) => {
       const updatedState = {...prevState, ...processedSegments};
@@ -144,12 +166,15 @@ export const MainPage: React.FC<{}> = (props) => {
             newHighlight={{}}
             setNewHighlight={setNewHighlight}
             newColor={{}}
-            setNewColor={setNewColor}/> {/* returns highlightedText */}
+            setNewColor={setNewColor}
+            staticHighlights={staticHighlights}
+            /> {/* returns highlightedText */}
 
           <HighlightedText
           userHighlights={userHighlights}
           sampleText={text}
-          userColors={userColors}/>
+          userColors={userColors}
+          staticHighlights={staticHighlights}/>
 
           {/* <MinDFA> */}
         </Container>

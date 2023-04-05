@@ -1,6 +1,6 @@
-//upon clicked, sends whatever state the regex is at currently to be parsed into DFA
-
 import styled from "styled-components";
+
+// It's a button!
 
 export const Button = styled.button`
   padding: 14px;
