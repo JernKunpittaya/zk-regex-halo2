@@ -67,8 +67,9 @@ export const MainPage: React.FC<{}> = (props) => {
   // const text =
   //   "accttsdM1aatasdfu]kktjjllM1233vdt[tM155aaatad]sfl;jasd;flkM15adt";
   const text =
-    "i send 54.3 eth to you but 6 daid back send 7.89 dai , Send $43.1 usdc ";
-  const testRegex = "M(1|2|3|4|5)*(a|v|d|u)*t";
+    "Hi Jern, Thanks very much for your kindness. You've successfully donated 54.3 USD to climate, donated 60.5 USD to childcare, and 10000 USD to 0xParc. Share this to friends!";
+  const testRegex =
+    "([Dd]onated|and) ($)?[0-9]+(.[0-9]+)? USD to (0xParc|climate|childcare|infra)";
   const [convertActive, setConvertActive] = useState<Boolean>(false);
 
   /// ************ HIGHLIGHT STATES *********** ///
