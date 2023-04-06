@@ -348,6 +348,7 @@ function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
   // sub_index = [i, j] non inclusive
   // indexes = sth like [ [ 3, 10 ], [ 18, 20 ], [ 20, 30 ], [ 44, 48 ] ]
   // find which indexes our sub_index belongs to
+  console.log("HERE")
   let index;
   for (let i = 0; i < indexes.length; i++) {
     if (indexes[i][0] <= sub_index[0] && indexes[i][1] >= sub_index[1]) {
@@ -396,6 +397,7 @@ function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
       }
     }
   }
+  console.log("states out: ", final_states)
   return final_states;
 }
 
@@ -428,9 +430,12 @@ module.exports = {
 // const text_test =
 //   "i send 54.3 eth to you but 6 daid back send 7.89 dai , Send $43.1 usdc ";
 
+// const regex = "M(1|2|3|4|5)*(a|v|d|u)*t"
+// const text_test = "accttsdM1aatasdfu]kktjjllM1233vdt[tM155aaatad]sfl;jasd;flkM15adt"
+
 // console.log("OG regex: ", regex);
 // const simp_graph = simplifyGraph(regex);
-// // console.log("simp graph: ", simp_graph);
+// console.log("simp graph: ", simp_graph);
 // const [substrings, indexes] = findSubstrings(simp_graph, text_test);
 // console.log("text: ", text_test);
 // console.log("match_substring: ", substrings);
