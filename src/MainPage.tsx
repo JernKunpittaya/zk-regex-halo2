@@ -84,8 +84,7 @@ export const MainPage: React.FC<{}> = (props) => {
   /// ************ REGEX STATES *********** ///
 
   const [regex, setRegex] = useState<string>("");
-  const [displayMessage, setDisplayMessage] =
-    useState<string>("Convert to DFA!");
+  const [displayMessage, setDisplayMessage] = useState<string>("Match RegEx!");
 
   /// ************ DFA STATES *********** ///
   const [rawDFA, setRawDFA] = useState<DFAGraphObject>({
@@ -244,13 +243,13 @@ export const MainPage: React.FC<{}> = (props) => {
         }}
       />
       <Button
-        disabled={displayMessage != "Convert to DFA!" || regex.length === 0}
+        disabled={displayMessage != "Match RegEx!" || regex.length === 0}
         onClick={async () => {
           console.log("yes");
           setConvertActive(true);
           setDisplayMessage("Generating DFA...");
           await handleGenerateDFA();
-          setDisplayMessage("Convert to DFA!");
+          setDisplayMessage("Match RegEx!");
           console.log("rawDFA: ", rawDFA);
           console.log("render state: ", renderDFA);
         }}
