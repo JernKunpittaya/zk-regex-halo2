@@ -17,7 +17,7 @@ import { RegexInput } from "./components/RegexInput";
 // import { RecursivePartial, NodeOptions, EdgeOptions, DagreReact } from "dagre-reactjs";
 import { DFAConstructor } from "./components/MinDFA";
 import { RecursivePartial, NodeOptions, EdgeOptions, DagreReact } from "dagre-reactjs";
-import { DFAVis } from "./components/DFAVis";
+
 
 const {
   simplifyGraph,
@@ -253,11 +253,8 @@ export const MainPage: React.FC<{}> = (props) => {
           userColor={newColor}
           activeStates={DFAActiveState}
           render={renderDFA}
-          passBackGraph={setDagreGraph}
           />
 
-          <DFAVis
-          DagreGraph={dagreGraph}/>
         </Container>
     );
 };

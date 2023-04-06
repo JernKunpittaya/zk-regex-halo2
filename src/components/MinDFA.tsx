@@ -1,5 +1,6 @@
 import React, { useState, useEffect, FC } from 'react';
 import { RecursivePartial, NodeOptions, EdgeOptions, DagreReact } from "dagre-reactjs";
+import { reverse } from 'lodash';
 
 // Takes in a raw DFA input to render in Dagre
 // Only highlights one state at a time!
@@ -30,10 +31,9 @@ interface props {
     userColor: ColorObject // ONE COLOR AT A TIME
     activeStates: DFAHighlightObject // make all nodes and edges listed here same color-- show JUST ONE
     render: boolean
-    passBackGraph: React.Dispatch<React.SetStateAction<DagreGraphObject>>
 }
 
-export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeStates, render, passBackGraph }) => {
+export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeStates, render, }) => {
   if (render) {
     console.log("============ RENDERED =============")
     console.log(minDFA,"/n", userColor,"/n", activeStates)
@@ -82,16 +82,28 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
 
     const allEdges = Object.keys(minDFA.transitions).map((start) => {
       const sinks = minDFA['transitions'][start]
-      const edges = Object.keys(sinks).map((lx) => {
-        const end = sinks[lx]
+      let ends: string[] = []
+      let holder: Record<string, string[]> = {}
+
+      // reverseDict has keys of the ending node and values corresponding to the transitions that lead to such a state
+      const reverseDict = Object.keys(sinks).map((label) => {
+        const curEnd = sinks[label]
+        if (Object.keys(holder).includes(curEnd)) {
+          holder[curEnd] = [...holder[curEnd], label]
+        } else {
+          holder[curEnd] = [label]
+        }
+      })
+
+      const edges = Object.keys(holder).map((end) => {
+
         const isTransition = Object.keys(activeEdges).includes(start)  ? ( activeEdges[start].has(end) ? true : false ) : false
 
         const edgeHolder = {
           from: start,
           to: end,
-          points: [],
           // pathType: "d3curve",
-          label: lx,
+          label: JSON.stringify(holder[end]),
           styles: {
             edge: {
               styles: {
@@ -196,7 +208,7 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
       },
       {
         from: "0",
-        to: "4"
+        to: "3"
       },
       {
         from: "3",
@@ -214,11 +226,14 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
     edges: allEdges
   }
 
-  passBackGraph(allPieces)
   console.log(allPieces)
-
     return (
-      <div> {"Graph rendered below:"} </div>
+      <svg id="schedule" width={1000} height={1000}>
+            <DagreReact
+              nodes={allPieces.nodes}
+              edges={allPieces.edges}
+            />
+        </svg>
     )} else {
       return(
     <div> {"Submit a highlight to render DFA."} </div>
