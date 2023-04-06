@@ -10,17 +10,21 @@ const r0to9 = "0|1|2|3|4|5|6|7|8|9";
 const alphanum = `${a2z}|${A2Z}|${r0to9}`;
 
 const key_chars = `(${a2z})`;
+// hypothesis: is key_chars in email only limit to these chars below?
+const succ_key_chars = "(v|a|c|d|s|t|h)";
 const catch_all =
-  "(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|\"|#|$|%|&|'|\\(|\\)|\\*|\\+|,|-|.|/|:|;|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0b|\x0c)";
+  "(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|\"|#|$|%|&|'|\\(|\\)|\\*|\\+|,|-|.|\\/|:|;|<|=|>|\\?|@|\\[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0b|\x0c)";
+// Not the same: \\[ and ]
 const catch_all_without_semicolon =
-  "(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|\"|#|$|%|&|'|\\(|\\)|\\*|\\+|,|-|.|/|:|<|=|>|\\?|@|[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0b|\x0c)";
+  "(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|!|\"|#|$|%|&|'|\\(|\\)|\\*|\\+|,|-|.|\\/|:|<|=|>|\\?|@|\\[|\\\\|]|^|_|`|{|\\||}|~| |\t|\n|\r|\x0b|\x0c)";
 
 const email_chars = `${alphanum}|_|.|-`;
-const base_64 = `(${alphanum}|\\+|/|=)`;
+const base_64 = `(${alphanum}|\\+|\\/|=)`;
 const word_char = `(${alphanum}|_)`;
 const a2z_nosep = "abcdefghijklmnopqrstuvwxyz";
 const A2Z_nosep = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const r0to9_nosep = "0123456789";
+const email_address_regex = `([a-zA-Z0-9._%\\+-]+@[a-zA-Z0-9.-]+.[a-zA-Z0-9]+)`;
 
 // let to_from_regex_old = '(\r\n|\x80)(to|from):([A-Za-z0-9 _."@-]+<)?[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.]+>?\r\n';
 // let regex = `\r\ndkim-signature:(${key_chars}=${catch_all_without_semicolon}+; )+bh=${base_64}+; `;
@@ -70,6 +74,30 @@ function regexToMinDFASpec(str) {
         // in case with escape +
         if (currChar === "+") {
           currChar = "\\+";
+        }
+        if (currChar === "*") {
+          currChar = "\\*";
+        }
+        if (currChar === "/") {
+          currChar = "\\/";
+        }
+        if (currChar === "?") {
+          currChar = "\\?";
+        }
+        if (currChar === "(") {
+          currChar = "\\(";
+        }
+        if (currChar === ")") {
+          currChar = "\\)";
+        }
+        if (currChar === "[") {
+          currChar = "\\[";
+        }
+        if (currChar === "\\") {
+          currChar = "\\\\";
+        }
+        if (currChar === "|") {
+          currChar = "\\|";
         }
         // } else if (currChar === "n") {
         //   currChar = "\\n";
@@ -154,9 +182,9 @@ function compile(regex) {
 function simplifyGraph(regex) {
   // console.log("input: ", regex);
   // const regex2 = "d[b\\+]c";
-  console.log("real inp: ", regex);
+  // console.log("real inp: ", regex);
   const regex_spec = regexToMinDFASpec(regex);
-  console.log("real regex: ", regex_spec);
+  // console.log("real regex: ", regex_spec);
   const ast = regexpTree.parse(`/${regex_spec}/`);
   regexpTree.traverse(ast, {
     "*": function ({ node }) {
@@ -227,23 +255,36 @@ function simplifyGraph(regex) {
   }
   // console.log("or_sets: ", or_sets);
   // deal with or_stops
+  // console.log("rev: ", rev_transitions);
   for (let state in rev_transitions) {
     let tmp_set = new Set();
     if (Object.keys(rev_transitions[state]).length > 1) {
       tmp_set = new Set();
       for (let prev_state in rev_transitions[state]) {
-        // All stop can loop to itself
+        // Change: All stop can loop to itself
         // if (prev_state != state) {
         tmp_set.add([state, prev_state].toString());
         // }
+        //
       }
     }
 
     if (tmp_set.size > 1) {
       or_stops.add(state);
+      // console.log("tmp: ", tmp_set);
+      if (state in rev_transitions[state]) {
+        for (let ele in rev_transitions[state]) {
+          if (
+            rev_transitions[state][ele].toString() ==
+            rev_transitions[state][state].toString()
+          ) {
+            or_stops.add(ele);
+          }
+        }
+      }
     }
   }
-  console.log("STOP: ", or_stops);
+  // console.log("STOP: ", or_stops);
 
   // console.log("or_stops: ", or_stops);
 
@@ -427,84 +468,143 @@ module.exports = {
   matchSubfromDFA,
 };
 
-// TEST send money
-// const regex = "[Ss]end ($)?[0-9]+(.[0-9]+)? (usdc|dai|eth) ";
-// const text_test =
-//   "i send 54.3 eth to you but 6 daid back send 7.89 dai , Send $43.1 usdc ";
+// TEST
+// 1. let sig_regex = `\r\ndkim-signature:(${key_chars}=${catch_all_without_semicolon}+; )+bh=${base_64}+; `
+// 2. let raw_subject_regex = `((\r\n)|\^)subject:[Ss]end (\\$)?[0-9]+(\\.[0-9])? (ETH|DAI|USDC|eth|usdc|dai) to (${email_address_regex}|0x[0-9]+)\r\n`;
+// 3. let raw_from_regex = `(\r\n|^)from:([A-Za-z0-9 _.,"@-]+)<[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+>\r\n`;
 
-// console.log("OG regex: ", regex);
-// const simp_graph = simplifyGraph(regex);
-// // console.log("simp graph: ", simp_graph);
-// const [substrings, indexes] = findSubstrings(simp_graph, text_test);
-// console.log("text: ", text_test);
+const email_wallet_txt = fs.readFileSync("./email_wallet.txt").toString();
+// Test 1.
+// const sig_regex = `\r\nDKIM-Signature:(${key_chars}=${catch_all_without_semicolon}+; )+bh=${base_64}+; `;
+const sig_regex = `\nDKIM-Signature: (${key_chars}=${catch_all_without_semicolon}+;( |\t|\n|\r|\x0b|\x0c)*)+ bh=${base_64}+;`;
+
+// console.log("OG sig_regex: ", sig_regex);
+// const simp_graph = simplifyGraph(sig_regex);
+// console.log("simp graph: ", simp_graph);
+// const [substrings, indexes] = findSubstrings(simp_graph, email_wallet_txt);
 // console.log("match_substring: ", substrings);
 // console.log("match_index: ", indexes);
 // console.log("\n  ");
 
-// // Highlight substring in any regex we matched
-// const substring = [7, 14];
+// show base_64 after bh part
+// const substring = [2835, 2859];
+// show catch_all_without semicolon part, can make to 2648 to add space
+// const substring = [2636, 2647];
+// show key_chars
+// const substring = [2629, 2639];
 // console.log("select substring: ", substring);
+// let substring_print = [];
+// for (let i = substring[0]; i < substring[1]; i++) {
+//   substring_print.push(i);
+// }
+// console.log("substring: ", indexToText(email_wallet_txt, [substring_print]));
 
 // // // Given DFA
 // const states_fromSubstring = matchDFAfromSub(
 //   simp_graph,
 //   indexes,
 //   substring,
-//   text_test
+//   email_wallet_txt
 // );
 // console.log("DFA state from substring: ", states_fromSubstring);
 
 // console.log(
 //   "Extracted substring from DFA states: ",
 //   indexToText(
-//     text_test,
-//     matchSubfromDFA(simp_graph, text_test, indexes, states_fromSubstring)
+//     email_wallet_txt,
+//     matchSubfromDFA(simp_graph, email_wallet_txt, indexes, states_fromSubstring)
 //   )
 // );
 
-// Test Header Email (without caret), Support fancy escape \t|\n|\r|\x0b|\x0c (not put \\+ yet, but works)
-const regex2 =
-  '(\n(([Ff]rom:([A-Za-z0-9 _."@-\\+]+<)?[a-zA-Z0-9_.-\\+]+@[a-zA-Z0-9_.]+>)?|([Ss]ubject:[a-zA-Z0-9 ]+)?|([Tt]o:([A-Za-z0-9 _."@-\\+]+<)?[a-zA-Z0-9_.-\\+]+@[a-zA-Z0-9_.]+>)?)\r)+';
-const text_test2 = fs.readFileSync("./email.txt").toString();
+// 2.
+// \r is gone in mac
+// const raw_subject_regex = `\n[Ss]ubject: [Ss]end ($)?[0-9]+(.[0-9])? (ETH|DAI|USDC|eth|usdc|dai) to (${email_address_regex}|0x[0-9]+)\n`;
 
-console.log("OG regex: ", regex2);
-const simp_graph2 = simplifyGraph(regex2);
-// console.log("simp graph: ", simp_graph2);
+// console.log("OG regex: ", raw_subject_regex);
+// const simp_graph2 = simplifyGraph(raw_subject_regex);
+// // console.log("simp graph: ", simp_graph2);
 
-const [substrings2, indexes2] = findSubstrings(simp_graph2, text_test2);
-// console.log("text: ", text_test2);
-console.log("match_substring: ", substrings2);
-console.log("match_index: ", indexes2);
+// const [substrings2, indexes2] = findSubstrings(simp_graph2, email_wallet_txt);
+// // console.log("text: ", text_test2);
+// console.log("match_substring: ", substrings2);
+// console.log("match_index: ", indexes2);
+// console.log("\n  ");
+
+// // Highlight substring in any regex we matched
+// reveal amount and currency
+// const substring2 = [4601, 4607];
+// reveal recipient
+// const substring2 = [4612, 4636];
+
+// console.log("select substring: ", substring2);
+// let substring2_print = [];
+// for (let i = substring2[0]; i < substring2[1]; i++) {
+//   substring2_print.push(i);
+// }
+// console.log("substring: ", indexToText(email_wallet_txt, [substring2_print]));
+// // // // // Given DFA
+// const states_fromSubstring2 = matchDFAfromSub(
+//   simp_graph2,
+//   indexes2,
+//   substring2,
+//   email_wallet_txt
+// );
+// console.log("DFA state from substring: ", states_fromSubstring2);
+
+// console.log(
+//   "Extracted substring from DFA states: ",
+//   indexToText(
+//     email_wallet_txt,
+//     matchSubfromDFA(
+//       simp_graph2,
+//       email_wallet_txt,
+//       indexes2,
+//       states_fromSubstring2
+//     )
+//   )
+// );
+
+// 3.
+// \r is gone in mac
+const raw_from_regex = `\n[Ff]rom:([A-Za-z0-9 _.,"@-]+)<[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+>\n`;
+
+console.log("OG regex: ", raw_from_regex);
+const simp_graph3 = simplifyGraph(raw_from_regex);
+// console.log("simp graph: ", simp_graph3);
+
+const [substrings3, indexes3] = findSubstrings(simp_graph3, email_wallet_txt);
+console.log("match_substring: ", substrings3);
+console.log("match_index: ", indexes3);
 console.log("\n  ");
 
 // // Highlight substring in any regex we matched
-// // For reveal < >
-const substring2 = [4053, 4073];
-// For in front of < >
-// const substring2 = [4048, 4073];
+// reveal from
+const substring3 = [4446, 4460];
 
-// For reveal things behind subject
-// const substring2 = [4123, 4140];
-
-console.log("select substring: ", substring2);
-let substring2_print = [];
-for (let i = substring2[0]; i < substring2[1]; i++) {
-  substring2_print.push(i);
+console.log("select substring: ", substring3);
+let substring3_print = [];
+for (let i = substring3[0]; i < substring3[1]; i++) {
+  substring3_print.push(i);
 }
-console.log("substring: ", indexToText(text_test2, [substring2_print]));
+console.log("substring: ", indexToText(email_wallet_txt, [substring3_print]));
 // // // // Given DFA
-const states_fromSubstring2 = matchDFAfromSub(
-  simp_graph2,
-  indexes2,
-  substring2,
-  text_test2
+const states_fromSubstring3 = matchDFAfromSub(
+  simp_graph3,
+  indexes3,
+  substring3,
+  email_wallet_txt
 );
-console.log("DFA state from substring: ", states_fromSubstring2);
+console.log("DFA state from substring: ", states_fromSubstring3);
 
 console.log(
   "Extracted substring from DFA states: ",
   indexToText(
-    text_test2,
-    matchSubfromDFA(simp_graph2, text_test2, indexes2, states_fromSubstring2)
+    email_wallet_txt,
+    matchSubfromDFA(
+      simp_graph3,
+      email_wallet_txt,
+      indexes3,
+      states_fromSubstring3
+    )
   )
 );
