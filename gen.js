@@ -349,15 +349,16 @@ function findSubstrings(simp_graph, text) {
   const substrings = [];
   const indexes = [];
   for (let i = 0; i < text.length; i++) {
-    for (let j = i + 1; j <= text.length; j++) {
-      const substring = text.slice(i, j);
+    for (let j = i; j < text.length; j++) {
+      const substring = text.slice(i, j + 1);
       if (accepts(simp_graph, substring)) {
         substrings.push(substring);
         indexes.push([i, j]);
       }
     }
   }
-  // indexes is not inclusive at the end
+  // indexes is inclusive at the end
+  // return [substrings, indexes];
   return [substrings, indexes];
 }
 // match from DFA to text
@@ -372,7 +373,7 @@ function matchSubfromDFA(simp_graph, text, indexes, states) {
   for (let i = 0; i < indexes.length; i++) {
     let state = simp_graph["start_state"];
     reveal_index = [];
-    for (let j = indexes[i][0]; j < indexes[i][1]; j++) {
+    for (let j = indexes[i][0]; j <= indexes[i][1]; j++) {
       next_state = simp_graph["transitions"][state][text[j]];
       if (states[state] && states[state].has(next_state)) {
         reveal_index.push(j);
@@ -388,7 +389,7 @@ function matchSubfromDFA(simp_graph, text, indexes, states) {
 // match from text to DFA. Flow can be one substring --> state --> to all substrings
 // this function support only one continuous substring
 function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
-  // sub_index = [i, j] non inclusive
+  // sub_index = [i, j] (non) inclusive
   // indexes = sth like [ [ 3, 10 ], [ 18, 20 ], [ 20, 30 ], [ 44, 48 ] ]
   // find which indexes our sub_index belongs to
   let index;
@@ -402,10 +403,10 @@ function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
   //states is {1:{"2"},3:{"3","4"},4:{"6"}}
   let states = {};
   let state = simp_graph["start_state"];
-  for (let i = index[0]; i < index[1]; i++) {
+  for (let i = index[0]; i <= index[1]; i++) {
     const symbol = text[i];
     next_state = simp_graph["transitions"][state][symbol];
-    if (i >= sub_index[0] && i < sub_index[1]) {
+    if (i >= sub_index[0] && i <= sub_index[1]) {
       if (!(state in states)) {
         let tmp_set = new Set();
         tmp_set.add(next_state.toString());
@@ -419,7 +420,7 @@ function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
   // console.log("states");
   // check with the or_sets first!
   // console.log("og states", states);
-  console.log("OG states: ", states);
+  // console.log("OG states: ", states);
   // console.log("or_sets: ", simp_graph["or_sets"]);
   let final_states = {};
   for (const state in states) {
@@ -566,9 +567,9 @@ const sig_regex = `\nDKIM-Signature: (${key_chars}=${catch_all_without_semicolon
 
 // 3.
 // \r is gone in mac
+console.log("Test: Capture From");
 const raw_from_regex = `\n[Ff]rom:([A-Za-z0-9 _.,"@-]+)<[a-zA-Z0-9_.-]+@[a-zA-Z0-9_.-]+>\n`;
-
-console.log("OG regex: ", raw_from_regex);
+console.log("regex: ", raw_from_regex);
 const simp_graph3 = simplifyGraph(raw_from_regex);
 // console.log("simp graph: ", simp_graph3);
 
@@ -594,7 +595,7 @@ const states_fromSubstring3 = matchDFAfromSub(
   substring3,
   email_wallet_txt
 );
-console.log("DFA state from substring: ", states_fromSubstring3);
+// console.log("DFA state from substring: ", states_fromSubstring3);
 
 console.log(
   "Extracted substring from DFA states: ",

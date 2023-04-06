@@ -2,6 +2,8 @@
   "dependencies": {
     "@types/lodash": "^4.14.192",
     "assert": "^2.0.0",
+    "dagre": "^0.8.5",
+    "dagre-reactjs": "^1.0.0",
     "fs": "^0.0.1-security",
     "lodash": "^4.17.21",
     "next": "^12.3.1",
