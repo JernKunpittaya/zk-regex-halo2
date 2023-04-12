@@ -49,8 +49,10 @@ type DFAGraphObject = {
 
 
 export const MainPage: React.FC<{}> = (props) => {
-  const text = "accttsdM1aatasdfu]kktjjllM1233vdt[tM155aaatad]sfl;jasd;flkM15adt"
-  const testRegex = "M(1|2|3|4|5)*(a|v|d|u)*t"
+  const text =
+    "Hi Jern, Thanks very much for your kindness. You've successfully donated 54.3 USD to climate, donated 60.5 USD to childcare, and 10000 USD to 0xParc. Share this to friends!";
+  const testRegex =
+    "([Dd]onated|and) ($)?[0-9]+(.[0-9]+)? USD to (0xParc|climate|childcare|infra)";
   const [convertActive, setConvertActive] = useState<Boolean>(false);
 
   /// ************ HIGHLIGHT STATES *********** /// 
@@ -238,7 +240,8 @@ export const MainPage: React.FC<{}> = (props) => {
           userHighlights={userHighlights}
           sampleText={text}
           userColors={userColors}
-          staticHighlights={staticHighlights}/>
+          staticHighlights={staticHighlights}
+          DFAActiveState={DFAActiveState}/>
 
           <CenterAllDiv>
           <DFAConstructor
