@@ -306,15 +306,15 @@ function findSubstrings(simp_graph, text) {
   const substrings = [];
   const indexes = [];
   for (let i = 0; i < text.length; i++) {
-    for (let j = i + 1; j <= text.length; j++) {
-      const substring = text.slice(i, j);
+    for (let j = i; j < text.length; j++) {
+      const substring = text.slice(i, j + 1);
       if (accepts(simp_graph, substring)) {
         substrings.push(substring);
         indexes.push([i, j]);
       }
     }
   }
-  // indexes is not inclusive at the end
+  // indexes is inclusive at the end
   return [substrings, indexes];
 }
 // match from DFA to text
@@ -329,7 +329,7 @@ function matchSubfromDFA(simp_graph, text, indexes, states) {
   for (let i = 0; i < indexes.length; i++) {
     let state = simp_graph["start_state"];
     reveal_index = [];
-    for (let j = indexes[i][0]; j < indexes[i][1]; j++) {
+    for (let j = indexes[i][0]; j <= indexes[i][1]; j++) {
       next_state = simp_graph["transitions"][state][text[j]];
       if (states[state] && states[state].has(next_state)) {
         reveal_index.push(j);
@@ -345,10 +345,10 @@ function matchSubfromDFA(simp_graph, text, indexes, states) {
 // match from text to DFA. Flow can be one substring --> state --> to all substrings
 // this function support only one continuous substring
 function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
-  // sub_index = [i, j] non inclusive
+  // sub_index = [i, j]  inclusive
   // indexes = sth like [ [ 3, 10 ], [ 18, 20 ], [ 20, 30 ], [ 44, 48 ] ]
   // find which indexes our sub_index belongs to
-  console.log("HERE")
+  console.log("HERE");
   let index;
   for (let i = 0; i < indexes.length; i++) {
     if (indexes[i][0] <= sub_index[0] && indexes[i][1] >= sub_index[1]) {
@@ -360,10 +360,10 @@ function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
   //states is {1:{"2"},3:{"3","4"},4:{"6"}}
   let states = {};
   let state = simp_graph["start_state"];
-  for (let i = index[0]; i < index[1]; i++) {
+  for (let i = index[0]; i <= index[1]; i++) {
     const symbol = text[i];
     next_state = simp_graph["transitions"][state][symbol];
-    if (i >= sub_index[0] && i < sub_index[1]) {
+    if (i >= sub_index[0] && i <= sub_index[1]) {
       if (!(state in states)) {
         let tmp_set = new Set();
         tmp_set.add(next_state.toString());
@@ -397,7 +397,7 @@ function matchDFAfromSub(simp_graph, indexes, sub_index, text) {
       }
     }
   }
-  console.log("states out: ", final_states)
+  console.log("states out: ", final_states);
   return final_states;
 }
 
@@ -499,7 +499,6 @@ module.exports = {
 //     matchSubfromDFA(simp_graph2, text_test2, indexes2, states_fromSubstring2)
 //   )
 // );
-
 
 //////////////////// FRONTEND DISABLED, ENABLE FOR BACKEND //////////////////
 // // Test fancy escape \t|\n|\r|\x0b|\x0c (besides \\+)
