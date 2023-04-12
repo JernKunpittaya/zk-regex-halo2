@@ -14,10 +14,8 @@ import { Button } from "./components/Button";
 import { match } from "assert";
 import { generate } from "regexp-tree";
 import { RegexInput } from "./components/RegexInput";
-// import { RecursivePartial, NodeOptions, EdgeOptions, DagreReact } from "dagre-reactjs";
 import { DFAConstructor } from "./components/MinDFA";
-import { RecursivePartial, NodeOptions, EdgeOptions, DagreReact } from "dagre-reactjs";
-
+import { Col, Row, CenterAllDiv } from "./components/Layout";
 
 const {
   simplifyGraph,
@@ -47,10 +45,6 @@ type DFAGraphObject = {
   "start_state": string,
   "states": string[],
   "transitions": Record<string, Record<string, string>>
-}
-type DagreGraphObject = {
-  "nodes": RecursivePartial<NodeOptions>[],
-  "edges": RecursivePartial<EdgeOptions>[]
 }
 
 
@@ -84,7 +78,6 @@ export const MainPage: React.FC<{}> = (props) => {
   const [renderDFA, setRenderDFA] = useState<boolean>(false)
   const [DFAActiveState, setDFAActiveState] = useState<DFAHighlightObject>({});
   const [AllDFAHighlights, setAllDFAHighlights] = useState<DFAHighlightObject>({}); //this one is accumulating, not refreshing
-  const [dagreGraph, setDagreGraph] = useState<DagreGraphObject>({nodes: [], edges: []})
 
   // const prevUserHighlights = usePrevious(userHighlights);
 
@@ -247,13 +240,14 @@ export const MainPage: React.FC<{}> = (props) => {
           userColors={userColors}
           staticHighlights={staticHighlights}/>
 
-
+          <CenterAllDiv>
           <DFAConstructor
           minDFA={rawDFA}
           userColor={newColor}
           activeStates={DFAActiveState}
           render={renderDFA}
           />
+          </CenterAllDiv>
 
         </Container>
     );

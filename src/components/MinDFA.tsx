@@ -40,6 +40,7 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
     const [activeNodes, setActiveNodes] = useState<string[]>([]) // maybe just make this a list
     const [activeEdges, setActiveEdges] = useState<DFAStateObject>({})
     const colorExtract = Object.values(userColor)[0]
+    // const colorExtract = "rgba(255, 0, 0, 0.5)"
 
     useEffect(() => {
       const trnst = Object.values(activeStates)[0]
@@ -50,14 +51,19 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
       }
   
       setActiveNodes(Array.from(activeNodeSet));
+      setActiveEdges(trnst)
     }, [activeStates])
 
     console.log(activeNodes)
+    console.log(activeEdges)
+    console.log("highlight: ", colorExtract)
 
     const allNodes = minDFA.states.map((idx) => {
       console.log("idx, ", idx)
       const accept = minDFA["accepted_states"].has(idx)
       const start = minDFA.start_state === idx
+      const activeN = activeNodes.includes(idx)
+      console.log("Active node: ", activeN, "index: ", idx)
 
       const nodeHolder = {
         id: idx,
@@ -65,7 +71,14 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
         shape: "circle",
         styles: {
           shape: {
-            styles: { fill: activeNodes.includes(idx) ? colorExtract : "rgba(255, 255, 255, 1)", stroke: accept ? "rgba(0, 0, 255, 0.6)" : "rgba(0, 0, 0, 1)" }
+            styles: {
+              fill: activeN ? colorExtract : "rgba(255, 255, 255, 1)",
+            stroke: accept ? "rgba(0, 0, 255, 0.6)" : activeN ? colorExtract: "rgba(225, 225, 225, 1)" }
+          },
+          label: {
+            styles: {
+              fill: activeN ? colorExtract : "rgba(255, 255, 255, 1)",
+            }
           },
           node: {
             padding: {
@@ -79,6 +92,8 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
       }
       return nodeHolder
     })
+
+    console.log("active edges: ", activeEdges)
 
     const allEdges = Object.keys(minDFA.transitions).map((start) => {
       const sinks = minDFA['transitions'][start]
@@ -97,7 +112,10 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
 
       const edges = Object.keys(holder).map((end) => {
 
-        const isTransition = Object.keys(activeEdges).includes(start)  ? ( activeEdges[start].has(end) ? true : false ) : false
+        const activeE = Object.keys(activeEdges).includes(start) && activeEdges[start].has(end)
+
+        const isTransition = Object.keys(activeEdges).includes(start)  ? ( activeE ? true : false ) : false
+        console.log("markings: ", start, end, " bool: ", isTransition)
 
         const edgeHolder = {
           from: start,
@@ -107,16 +125,16 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
           styles: {
             edge: {
               styles: {
-                strokeWidth: "4px",
-                fill: "rgba(255, 255, 255, 1)",
-                stroke: isTransition ? colorExtract : "rgba(0, 0, 0, 1)"
+                strokeWidth: isTransition ? "4px" : "2px",
+                fill: "rgba(0, 0, 0, 0)",
+                stroke: isTransition ? colorExtract : "rgba(225, 225, 225, 1)"
               }
             },
             marker: {
               styles: {
                 strokeWidth: "2px",
-                fill: isTransition ? colorExtract : "rgba(0, 0, 0, 1)",
-                stroke: isTransition ? colorExtract : "rgba(0, 0, 0, 1)"
+                fill: isTransition ? colorExtract : "rgba(225, 225, 225, 1)",
+                stroke: isTransition ? colorExtract : "rgba(225, 225, 225, 1)"
               }
             }
           }
@@ -129,97 +147,6 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
     console.log("nodes: ", allNodes)
     console.log("edges: ", allEdges)
 
-    const test1 = {
-      nodes: [
-      {
-        id: "0",
-        label: "Project Start",
-        shape: "circle",
-        styles: {
-          shape: {
-            styles: { fill: "#fff", stroke: "#000" }
-          },
-          node: {
-            padding: {
-              top: 20,
-              bottom: 20,
-              left: 20,
-              right: 20
-            }
-          }
-        }
-      },
-      {
-        id: "2",
-        label: "Project End",
-        styles: {
-          shape: {
-            styles: { fill: "#fff", stroke: "#000" }
-          },
-          node: {
-            padding: {
-              top: 20,
-              bottom: 20,
-              left: 20,
-              right: 20
-            }
-          }
-        }
-      },
-      {
-        id: "3",
-        label: "A",
-        styles: {
-          shape: {
-            styles: { fill: "#fff", stroke: "#000" }
-          },
-          node: {
-            padding: {
-              top: 20,
-              bottom: 20,
-              left: 20,
-              right: 20
-            }
-          }
-        }
-      },
-      {
-        id: "4",
-        label: "B",
-        styles: {
-          shape: {
-            styles: { fill: "#fff", stroke: "#fff" }
-          },
-          node: {
-            padding: {
-              top: 20,
-              bottom: 20,
-              left: 20,
-              right: 20
-            }
-          }
-        }
-      }
-    ],
-    edges: [
-      {
-        from: "0",
-        to: "3"
-      },
-      {
-        from: "0",
-        to: "3"
-      },
-      {
-        from: "3",
-        to: "2"
-      },
-      {
-        from: "4",
-        to: "2"
-      }
-    ]
-  };
 
   const allPieces = {
     nodes: allNodes,
@@ -228,7 +155,7 @@ export const DFAConstructor: React.FC<props> = ({ minDFA, userColor, activeState
 
   console.log(allPieces)
     return (
-      <svg id="schedule" width={1000} height={1000}>
+      <svg id="schedule" width={2000} height={1000}>
             <DagreReact
               nodes={allPieces.nodes}
               edges={allPieces.edges}
