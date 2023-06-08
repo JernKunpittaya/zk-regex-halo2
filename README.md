@@ -1,1 +1,3 @@
-For transforming regex into look up table for halo2
+[DEPRECATED] See https://github.com/JernKunpittaya/full_zk_regex instead.
+
+Demo of zk-regex frontend + first version backend in vietnam residency.
